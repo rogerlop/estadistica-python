@@ -1,0 +1,19 @@
+format:
+  revealjs:
+    theme: serif
+    logo: ../../assets/Imagenes/logoCENACE.svg
+    css: ../../assets/custom.css
+    toc: true
+    toc-title: "Contenido"
+    slide-number: true
+    transition: fade
+    math: mathjax
+    html-math-method: mathjax
+    chalkboard: false
+    smaller: false
+    scrollable: true
+
+execute:
+  echo: true
+  warning: false
+  message: false
