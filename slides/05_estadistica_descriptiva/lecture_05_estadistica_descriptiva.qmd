@@ -1,0 +1,865 @@
+---
+title: "Estadística Descriptiva"
+subtitle: "Clase 5 — Curso de Estadística en Python"
+author: "CENACE"
+date: today
+lang: es
+---
+
+```{python}
+#| label: setup
+#| include: false
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import scipy.stats as stats
+import warnings
+
+warnings.filterwarnings("ignore")
+
+# Configuración general de matplotlib
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.size": 13,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+})
+```
+
+# Introducción
+
+Cada vez que trabajamos con un conjunto de datos, la primera tarea es _resumir_
+la información de forma clara y comprensible. Lo segundo es _organizar_ la
+información y, en tercer lugar, está el _presentarla_. Esto es el propósito de
+la **estadística descriptiva**, que es el primer paso en cualquier análisis
+estadístico, antes de aplicar métodos más avanzados.
+
+## Los datos
+
+En esta parte del curso utilizaremos los
+[datos obtenidos del Fondo Monetario Internacional (FMI)](https://github.com/rogerlop/EstadisticaR-CENACE/tree/main/Modulo%201%20-%20Intro%20y%20manipulacion%20de%20datos/Data),
+acotados para los años 2000 a 2023.
+
+```{python}
+#| label: carga-datos
+
+data = pd.read_csv("../../data/raw/Data_FMI.csv")
+data = data[(data["Año"] >= 2000) & (data["Año"] <= 2023)].reset_index(drop=True)
+data.head()
+```
+
+. . .
+
+Con `pandas` podemos explorar rápidamente la estructura del conjunto de datos:
+
+```{python}
+#| label: exploracion-datos
+
+print(data.shape)
+print(data.dtypes)
+```
+
+# Medidas de tendencia central
+
+Las **medidas de tendencia central** son números que representan el centro de
+un conjunto de datos. Las más comunes son la **media**, la **mediana** y la
+**moda**.
+
+## Media
+
+La **media** es el promedio de un conjunto de datos. Se calcula sumando todos
+los valores y dividiendo por el número de valores.
+
+$$\bar x = \frac{1}{n}\sum_{i=1}^{n} x_i$$
+
+Donde:
+
+- $\bar x$ es la media.
+- $n$ es el número de observaciones.
+- $x_i$ son los valores individuales.
+
+. . .
+
+Por ejemplo, si tenemos los valores 2, 3, 5 y 7, la media sería:
+$$\bar x = \frac{2 + 3 + 5 + 7}{4} = \frac{17}{4} = 4.25$$
+
+---
+
+Intuitivamente, la media es el valor que "equilibra" todos los datos. Si
+tuviéramos que colocar todos los valores en una balanza, la media sería el
+punto de equilibrio.
+
+::: {.columns}
+::: {.column width="60%"}
+
+```{python}
+#| label: fig-media
+#| echo: false
+#| fig-width: 7
+#| fig-height: 5
+
+data_2023 = data[data["Año"] == 2023].copy()
+media_val = (data_2023["GDPpc_usd"] / 1000).mean()
+
+fig, ax = plt.subplots(figsize=(7, 5))
+ax.hist(data_2023["GDPpc_usd"] / 1000, bins=60,
+        color="steelblue", edgecolor="black", linewidth=0.3)
+ax.axvline(media_val, color="red", linewidth=2, label=f"Media (${media_val:,.1f}k)")
+ax.set_title("Distribución del PIB per cápita en 2023")
+ax.set_xlabel("\nPIB per cápita (miles USD)")
+ax.set_ylabel("Frecuencia")
+ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"${x:.0f}k"))
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+:::
+::: {.column width="40%"}
+
+Para calcular la media del PIB per cápita en 2023 utilizamos:
+
+```{python}
+#| label: media-calculo
+
+media_gdppc = (data_2023["GDPpc_usd"] / 1000).mean()
+print(f"Media PIB pc 2023: ${media_gdppc:,.2f}k")
+```
+
+Alternativamente, con `pandas`:
+
+```{python}
+#| label: media-pandas
+
+(
+    data[data["Año"] == 2023]
+    .assign(GDPpc_miles=lambda df: df["GDPpc_usd"] / 1000)
+    [["GDPpc_miles"]]
+    .agg("mean")
+)
+```
+
+:::
+:::
+
+---
+
+<br><br><br><br>
+
+::: {.callout-note title="Nota"}
+La media es sensible a los valores extremos (outliers). Por ejemplo, si un
+país tiene un PIB per cápita muy alto puede distorsionar la media hacia arriba.
+Por eso, en algunos casos es preferible utilizar **la mediana** como medida de
+tendencia central.
+:::
+
+## Mediana
+
+La **mediana** es el valor que divide un conjunto de datos en dos partes
+iguales. El 50% de los valores están por debajo de la mediana y el 50% están
+por encima. Se calcula ordenando los datos y seleccionando el valor del medio.
+
+<br>
+
+. . .
+
+Si el número de observaciones es impar, la mediana es el valor del medio. Si es
+par, la mediana es el promedio de los dos valores del medio.
+
+<br>
+
+. . .
+
+A diferencia de la media, la mediana no se ve afectada por los valores extremos.
+Por lo tanto, es una medida más robusta de tendencia central en presencia de
+outliers.
+
+---
+
+### Definición formal de la mediana
+
+::: {.fragment data-fragment-index="1"}
+Sea $X$ un conjunto de datos con $n$ observaciones. Ordenamos los datos de
+menor a mayor:
+
+$$X_{\text{ordenado}} = \{ x_{(1)}, x_{(2)}, \dots, x_{(n)} \}
+\text{ tal que } x_{(1)} \leq x_{(2)} \leq \dots \leq x_{(n)}$$
+
+La mediana se define como:
+
+$$\text{Mediana}(X) = \begin{cases}
+  x_{\left(\frac{n+1}{2}\right)} & \text{si } n \text{ es impar,} \\
+  \frac{1}{2}\!\left(x_{\left(\frac{n}{2}\right)}
+    + x_{\left(\frac{n}{2}+1\right)}\right) & \text{si } n \text{ es par.}
+\end{cases}$$
+:::
+
+::: {.fragment data-fragment-index="2"}
+Por ejemplo, si tenemos los valores 2, 3, 5 y 7, la mediana sería:
+
+- Como hay 4 valores (par), tomamos los dos del medio: 3 y 5.
+- La mediana es el promedio de estos dos valores:
+
+$$\text{Mediana} = \frac{3 + 5}{2} = 4$$
+:::
+
+---
+
+Intuitivamente, la mediana divide el conjunto de datos en dos partes iguales.
+
+::: {.columns}
+::: {.column width="60%"}
+
+```{python}
+#| label: fig-mediana
+#| echo: false
+#| fig-width: 7
+#| fig-height: 5
+
+mediana_val = (data_2023["GDPpc_usd"] / 1000).median()
+
+fig, ax = plt.subplots(figsize=(7, 5))
+ax.hist(data_2023["GDPpc_usd"] / 1000, bins=60,
+        color="steelblue", edgecolor="black", linewidth=0.3)
+ax.axvline(media_val, color="red", linewidth=2, label=f"Media (${media_val:,.1f}k)")
+ax.axvline(mediana_val, color="blue", linewidth=2,
+           label=f"Mediana (${mediana_val:,.1f}k)")
+ax.set_title("Distribución del PIB per cápita en 2023")
+ax.set_xlabel("\nPIB per cápita (miles USD)")
+ax.set_ylabel("Frecuencia")
+ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"${x:.0f}k"))
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+:::
+::: {.column width="40%"}
+
+Para calcular la mediana del PIB per cápita en 2023:
+
+```{python}
+#| label: mediana-calculo
+
+mediana_gdppc = (data_2023["GDPpc_usd"] / 1000).median()
+print(f"Mediana PIB pc 2023: ${mediana_gdppc:,.2f}k")
+```
+
+Alternativamente, con `pandas`:
+
+```{python}
+#| label: mediana-pandas
+
+(
+    data[data["Año"] == 2023]
+    .assign(GDPpc_miles=lambda df: df["GDPpc_usd"] / 1000)
+    [["GDPpc_miles"]]
+    .agg("median")
+)
+```
+
+:::
+:::
+
+# Medidas de dispersión
+
+Las **medidas de dispersión** indican cuánto varían los datos respecto a la
+media o a la mediana. Las más comunes son el **rango**, el **rango intercuartil**,
+la **varianza** y la **desviación estándar**.
+
+## Rango
+
+El **rango** es la diferencia entre el valor máximo y el valor mínimo de un
+conjunto de datos:
+
+$$Rango = x_{\text{max}} - x_{\text{min}}$$
+
+. . .
+
+Por ejemplo, si tenemos los valores 2, 3, 5 y 7:
+
+$$Rango = 7 - 2 = 5$$
+
+---
+
+El rango nos da una idea de la amplitud de los datos: cuánto se extienden los
+valores desde el mínimo hasta el máximo.
+
+. . .
+
+En nuestro caso, el rango del PIB per cápita en 2023:
+
+```{python}
+#| label: rango-calculo
+
+gdppc_2023 = data_2023["GDPpc_usd"] / 1000
+maximo = gdppc_2023.max()
+minimo = gdppc_2023.min()
+rango = maximo - minimo
+print(f"Máximo: ${maximo:,.2f}k  |  Mínimo: ${minimo:,.2f}k  |  Rango: ${rango:,.2f}k")
+```
+
+. . .
+
+Alternativamente, con `pandas`:
+
+```{python}
+#| label: rango-pandas
+
+(
+    data[data["Año"] == 2023]
+    .assign(GDPpc_miles=lambda df: df["GDPpc_usd"] / 1000)
+    .agg(rango_GDPpc=("GDPpc_miles", lambda s: s.max() - s.min()))
+)
+```
+
+## Rango intercuartil
+
+Un **cuantil** (también llamado **percentil**) es un valor que divide un
+conjunto de datos ordenados en partes iguales.
+
+. . .
+
+Los **cuartiles** dividen un conjunto de datos en cuatro partes iguales:
+
+- **Primer cuartil ($Q1$)**: separa el 25 % inferior de los datos.
+- **Segundo cuartil ($Q2$)**: la mediana (50 %).
+- **Tercer cuartil ($Q3$)**: separa el 75 % inferior de los datos.
+
+. . .
+
+El rango intercuartil se calcula como:
+
+$$IQR = Q3 - Q1$$
+
+---
+
+En nuestro ejemplo, el rango intercuartil del PIB per cápita en 2023:
+
+::: {.columns}
+::: {.column width="55%"}
+
+```{python}
+#| label: fig-iqr
+#| echo: false
+#| fig-width: 6
+#| fig-height: 5
+
+q1 = gdppc_2023.quantile(0.25)
+q3 = gdppc_2023.quantile(0.75)
+
+fig, ax = plt.subplots(figsize=(6, 5))
+ax.hist(gdppc_2023, bins=60, color="steelblue", edgecolor="black", linewidth=0.3)
+ax.axvline(media_val, color="red", linewidth=2, label=f"Media (${media_val:,.1f}k)")
+ax.axvline(mediana_val, color="blue", linewidth=2,
+           label=f"Mediana (${mediana_val:,.1f}k)")
+ax.axvline(q1, color="green", linewidth=2, linestyle="--",
+           label=f"Q1 (${q1:,.1f}k)")
+ax.axvline(q3, color="orange", linewidth=2, linestyle="--",
+           label=f"Q3 (${q3:,.1f}k)")
+ax.set_title("Distribución del PIB per cápita en 2023")
+ax.set_xlabel("\nPIB per cápita (miles USD)")
+ax.set_ylabel("Frecuencia")
+ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"${x:.0f}k"))
+ax.legend(fontsize=10)
+plt.tight_layout()
+plt.show()
+```
+
+:::
+::: {.column width="45%"}
+
+Para calcular el IQR del PIB per cápita en 2023:
+
+```{python}
+#| label: iqr-calculo
+
+q1 = gdppc_2023.quantile(0.25)
+q3 = gdppc_2023.quantile(0.75)
+iqr = q3 - q1
+print(f"Q1: ${q1:,.2f}k")
+print(f"Q3: ${q3:,.2f}k")
+print(f"IQR: ${iqr:,.2f}k")
+```
+
+Alternativamente, con `pandas`:
+
+```{python}
+#| label: iqr-pandas
+
+from scipy.stats import iqr as scipy_iqr
+
+(
+    data[data["Año"] == 2023]
+    .assign(GDPpc_miles=lambda df: df["GDPpc_usd"] / 1000)
+    .agg(iqr_GDPpc=("GDPpc_miles", scipy_iqr))
+)
+```
+
+:::
+:::
+
+---
+
+### Boxplot o gráfico de caja
+
+::: {.columns}
+::: {.column width="40%"}
+
+Una forma común de visualizar el rango intercuartil y los cuartiles es mediante
+el **gráfico de caja** (boxplot). Este gráfico muestra la mediana, los cuartiles
+y los valores atípicos (outliers) de un conjunto de datos.
+
+En un boxplot, la caja representa el IQR, la línea dentro de la caja representa
+la mediana, y los "bigotes" se extienden hasta 1.5 veces el IQR.
+
+:::
+::: {.column width="60%"}
+
+```{python}
+#| label: fig-boxplot-ejemplo
+#| echo: false
+#| fig-width: 7
+#| fig-height: 7
+
+rng = np.random.default_rng(123)
+datos_sim = rng.normal(loc=50, scale=10, size=1000)
+
+fig, ax = plt.subplots(figsize=(5, 7))
+bp = ax.boxplot(datos_sim, patch_artist=True, widths=0.3,
+                boxprops=dict(facecolor="#a6cee3", color="#1f78b4"),
+                medianprops=dict(color="#1f78b4"),
+                flierprops=dict(marker="o", markerfacecolor="red",
+                                markersize=5))
+
+q_labels = {
+    "Min": np.min(datos_sim[datos_sim >= np.percentile(datos_sim, 0)]),
+    "Q1 (25%)": np.percentile(datos_sim, 25),
+    "Mediana (50%)": np.median(datos_sim),
+    "Q3 (75%)": np.percentile(datos_sim, 75),
+    "Max": np.max(datos_sim[datos_sim <= np.percentile(datos_sim, 100)]),
+}
+for label, val in q_labels.items():
+    ax.annotate(label, xy=(1.18, val), xycoords=("axes fraction", "data"),
+                fontsize=11, va="center")
+
+ax.set_title("Distribución de datos con cuartiles")
+ax.set_xticks([])
+ax.set_ylabel("Valor")
+plt.tight_layout()
+plt.show()
+```
+
+:::
+:::
+
+---
+
+Por ejemplo, el boxplot del PIB per cápita en 2023 muestra la distribución de
+los datos, destacando los cuartiles y la mediana. Los puntos fuera de los
+bigotes son considerados outliers.
+
+::: {.columns}
+::: {.column width="60%"}
+
+```{python}
+#| label: fig-boxplot-2023
+#| echo: false
+#| fig-width: 7
+#| fig-height: 5
+
+fig, ax = plt.subplots(figsize=(5, 5))
+ax.boxplot(gdppc_2023.dropna(), patch_artist=True, widths=0.4,
+           boxprops=dict(facecolor="steelblue", color="black"),
+           medianprops=dict(color="black"),
+           flierprops=dict(marker="o", markerfacecolor="red", markersize=5))
+ax.set_title("Boxplot del PIB per cápita en 2023")
+ax.set_ylabel("PIB per cápita (miles USD)")
+ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"${x:.0f}k"))
+ax.set_xticks([])
+plt.tight_layout()
+plt.show()
+```
+
+:::
+::: {.column width="40%"}
+
+En nuestro caso, el boxplot es bastante sugerente: la mayoría de los países
+tienen un PIB per cápita entre USD 5 000 y USD 20 000, pero hay algunos países
+con PIB per cápita muy altos (outliers) que distorsionan la media.
+
+Lo interesante, desde el punto de vista del análisis, es preguntarse por qué
+observamos esos datos.
+
+:::
+:::
+
+---
+
+¿Este tipo de distribución del ingreso se ha visto en otros años? ¿O es algo
+nuevo? Podríamos graficar el boxplot del PIB per cápita para todos los años y
+ver si la distribución ha cambiado.
+
+```{python}
+#| label: fig-boxplot-años
+#| echo: false
+#| fig-width: 11
+#| fig-height: 6
+
+data_reciente = data[data["Año"] >= 2010].copy()
+años = sorted(data_reciente["Año"].unique())
+
+grupos = [
+    (data_reciente[data_reciente["Año"] == a]["GDPpc_usd"] / 1000).dropna().values
+    for a in años
+]
+
+fig, ax = plt.subplots(figsize=(11, 6))
+bp = ax.boxplot(grupos, patch_artist=True, widths=0.5,
+                boxprops=dict(facecolor="steelblue", color="black"),
+                medianprops=dict(color="black"),
+                flierprops=dict(marker="o", markerfacecolor="red", markersize=4))
+ax.set_xticklabels(años, rotation=90)
+ax.set_title("Boxplot del PIB per cápita por año")
+ax.set_xlabel("Año")
+ax.set_ylabel("PIB per cápita (miles USD)")
+ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"${x:.0f}k"))
+ax.grid(False)
+plt.tight_layout()
+plt.show()
+```
+
+---
+
+Otra pregunta interesante es cómo se compara la distribución del PIB per cápita
+entre diferentes regiones del mundo.
+
+```{python}
+#| label: fig-boxplot-regiones
+#| echo: false
+#| fig-width: 11
+#| fig-height: 6
+
+data_2023_clean = data_2023.dropna(subset=["Continent", "GDPpc_usd"])
+regiones = sorted(data_2023_clean["Continent"].unique())
+colores = plt.cm.tab10.colors
+
+grupos_reg = [
+    (data_2023_clean[data_2023_clean["Continent"] == r]["GDPpc_usd"] / 1000).dropna().values
+    for r in regiones
+]
+
+fig, ax = plt.subplots(figsize=(11, 6))
+bp = ax.boxplot(grupos_reg, patch_artist=True, widths=0.5,
+                flierprops=dict(marker="o", markerfacecolor="red", markersize=4),
+                medianprops=dict(color="black"))
+for patch, color in zip(bp["boxes"], colores):
+    patch.set_facecolor(color)
+ax.set_xticklabels(regiones, rotation=0)
+ax.set_title("Boxplot del PIB per cápita por región el año 2023")
+ax.set_xlabel("\nRegión")
+ax.set_ylabel("PIB per cápita (miles USD)")
+ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"${x:.0f}k"))
+ax.grid(False)
+plt.tight_layout()
+plt.show()
+```
+
+## Varianza y desviación estándar
+
+La **varianza** es una medida de la dispersión de los datos respecto a la media:
+
+$$\hat\sigma^2 = \frac{1}{n}\sum_{i=1}^{n} (x_i - \bar x)^2$$
+
+Donde:
+
+- $\hat\sigma^2$ es la varianza.
+- $n$ es el número de observaciones.
+- $x_i$ son los valores individuales.
+- $\bar x$ es la media.
+
+. . .
+
+Intuitivamente, la varianza nos dice cuánto se dispersan los datos respecto a
+la media. Si la varianza es alta, los datos están muy dispersos; si es baja,
+están más concentrados alrededor de la media.
+
+---
+
+### Ejemplo de cálculo
+
+Se desea calcular la varianza de los valores 2, 3, 5 y 7.
+
+::: {.fragment data-fragment-index="1"}
+Primero calculamos la media:
+$$\bar x = \frac{2 + 3 + 5 + 7}{4} = 4.25$$
+:::
+
+::: {.fragment data-fragment-index="2"}
+Luego calculamos la varianza:
+
+$$\hat{\sigma}^2 = \frac{1}{4}\left((2-4.25)^2 + (3-4.25)^2 + (5-4.25)^2 + (7-4.25)^2\right)
+= \frac{14.75}{4} = 3.6875$$
+:::
+
+::: {.fragment data-fragment-index="3"}
+¿Cómo se interpreta la varianza?
+:::
+
+## Desviación estándar
+
+La varianza _no tiene las mismas unidades que los datos originales_ (son
+"unidades al cuadrado"), lo que puede dificultar su interpretación.
+
+. . .
+
+Por eso se utiliza la **desviación estándar**, que es la raíz cuadrada de la
+varianza:
+
+$$\hat\sigma = \sqrt{\hat\sigma^2}
+= \sqrt{\dfrac{1}{n}\sum_{i=1}^{n}(x_i - \bar{x})^2}$$
+
+. . .
+
+En Python:
+
+```{python}
+#| label: varianza-std
+
+varianza = gdppc_2023.var(ddof=0)           # varianza poblacional
+std_dev  = gdppc_2023.std(ddof=0)           # desviación estándar poblacional
+
+print(f"Varianza:             {varianza:,.2f} (miles USD)²")
+print(f"Desviación estándar:  {std_dev:,.2f} miles USD")
+```
+
+## Simetría y curtosis
+
+La **simetría** y la **curtosis** describen la _forma_ de una distribución de
+datos. Son útiles para entender cómo se distribuyen los datos en torno a la
+media y cómo se comportan las colas.
+
+---
+
+### Simetría (skewness)
+
+::: {.fragment data-fragment-index="1"}
+La **simetría** mide qué tan simétrica es una distribución. Se mide mediante el
+**coeficiente de asimetría** (skewness):
+
+$$\text{simetría}(x) = \frac{1}{n\hat{\sigma}^3}\sum_{i=1}^n (x_i - \bar{x})^3$$
+:::
+
+::: {.fragment data-fragment-index="2"}
+- **Regla de interpretación**
+  - $\text{simetría} < 0 \;\rightarrow\;$ sesgo negativo (a la izquierda).
+  - $\text{simetría} = 0 \;\rightarrow\;$ simétrica.
+  - $\text{simetría} > 0 \;\rightarrow\;$ sesgo positivo (a la derecha).
+:::
+
+::: {.fragment data-fragment-index="3"}
+
+```{python}
+#| label: simetria
+
+simetria = gdppc_2023.skew()
+print(f"Simetría del PIB pc 2023: {simetria:.4f}")
+```
+
+:::
+
+---
+
+### Curtosis (kurtosis)
+
+::: {.fragment data-fragment-index="1"}
+La **curtosis** mide la "altura" y "ancho" de las colas de una distribución.
+Evalúa qué tan concentrados están los datos en torno a la media:
+
+$$\text{curtosis}(x) = \frac{1}{n\hat\sigma^4}\sum_{i=1}^n (x_i-\bar{x})^4 - 3$$
+:::
+
+::: {.fragment data-fragment-index="2"}
+- **Clasificación informal**
+
+  | Forma | Nombre técnico | Signo de la _excess kurtosis_ |
+  |-------|----------------|-------------------------------|
+  | "Demasiado plana" | **Platykurtic** | negativa |
+  | "En el punto justo" | **Mesokurtic** | cero |
+  | "Demasiado picuda" | **Leptokurtic** | positiva |
+:::
+
+::: {.fragment data-fragment-index="3"}
+
+```{python}
+#| label: curtosis
+
+curtosis = gdppc_2023.kurt()
+print(f"Curtosis del PIB pc 2023: {curtosis:.4f}")
+```
+
+:::
+
+# Covarianza y correlación
+
+La **covarianza** y la **correlación** describen la relación entre dos
+variables. Ambas son útiles para entender cómo varían juntas y si existe una
+_relación lineal_ entre ellas.
+
+## Motivación
+
+**Puntaje en test.** Cuando se postula a una universidad (o maestría), los
+candidatos rinden tests _estandarizados_ con secciones de _razonamiento verbal_
+($X$) y _razonamiento cuantitativo_ ($Y$).
+
+. . .
+
+Aunque hay estudiantes que rinden mejor en una parte que en otra, es razonable
+suponer que quien tuvo muy buen puntaje en una sección tendrá un rendimiento al
+menos tan bueno como el promedio en la otra.
+
+. . .
+
+¿Cómo podríamos encontrar un número que _refleje_ el grado en que un buen
+puntaje en una sección esté acompañado por un buen puntaje en la otra?
+
+## Covarianza
+
+La **covarianza** indica cómo dos variables varían juntas:
+
+$$\text{Cov}(x,y) = \frac{1}{n-1}\sum_{i=1}^n (x_i - \bar{x})(y_i - \bar{y})$$
+
+. . .
+
+En Python, usando `pandas`:
+
+```{python}
+#| label: covarianza
+
+bolivia = data[(data["Pais"] == "Bolivia") & (data["Año"] > 1990)].copy()
+
+cov_val = bolivia["rgrowth"].cov(bolivia["Inflacion"])
+print(f"Covarianza crecimiento–inflación (Bolivia): {cov_val:.4f}")
+```
+
+---
+
+Es posible construir un ejemplo sencillo para ilustrar la covarianza. Supongamos
+que tenemos dos variables $X$ e $Y$:
+
+```{python}
+#| label: fig-covarianza-ejemplo
+#| echo: false
+#| fig-width: 12
+#| fig-height: 4
+
+rng = np.random.default_rng(123)
+n = 200
+
+x_pos = rng.normal(size=n)
+y_pos = 2 * x_pos + rng.normal(scale=0.5, size=n)
+
+x_neg = rng.normal(size=n)
+y_neg = -2 * x_neg + rng.normal(scale=0.5, size=n)
+
+x_none = rng.normal(size=n)
+y_none = rng.normal(size=n)
+
+cov_pos = np.cov(x_pos, y_pos)[0, 1]
+cov_neg = np.cov(x_neg, y_neg)[0, 1]
+cov_none = np.cov(x_none, y_none)[0, 1]
+
+fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+
+titulos = [
+    f"Positiva ({cov_pos:.2f})",
+    f"Negativa ({cov_neg:.2f})",
+    f"Sin relación ({cov_none:.2f})",
+]
+pares = [(x_pos, y_pos), (x_neg, y_neg), (x_none, y_none)]
+
+for ax, (x, y), titulo in zip(axes, pares, titulos):
+    ax.scatter(x, y, alpha=0.6, color="steelblue", s=15)
+    ax.set_title(titulo)
+    ax.set_xlabel("Variable X")
+    ax.set_ylabel("Variable Y")
+    ax.grid(False)
+
+plt.tight_layout()
+plt.show()
+```
+
+::: {.callout-warning title="Advertencia"}
+La covarianza puede ser difícil de interpretar porque su valor depende de las
+unidades de las variables (e.g., metros × kilogramos).
+:::
+
+## Correlación
+
+La **correlación** es una medida estandarizada de la covarianza que indica la
+fuerza y dirección de la relación lineal entre dos variables:
+
+$$\text{Corr}(x,y) = \frac{\text{Cov}(x,y)}{\hat\sigma_x \hat\sigma_y}$$
+
+---
+
+En Python, usando `pandas`:
+
+```{python}
+#| label: correlacion
+
+corr_val = bolivia["rgrowth"].corr(bolivia["Inflacion"])
+print(f"Correlación crecimiento–inflación (Bolivia): {corr_val:.4f}")
+```
+
+. . .
+
+La correlación está acotada entre −1 y 1:
+
+- Si $\text{Corr}(x,y) = 1$: relación lineal perfecta positiva.
+- Si $\text{Corr}(x,y) = -1$: relación lineal perfecta negativa.
+- Si $\text{Corr}(x,y) = 0$: no hay relación lineal entre las variables.
+
+. . .
+
+Además, la correlación es **adimensional**, lo que la hace más fácil de
+interpretar que la covarianza y permite comparar pares de variables distintos.
+
+---
+
+Siempre es bueno visualizar la relación entre dos variables. Graficamos el
+crecimiento del PIB real y la inflación para Bolivia desde 1990.
+
+```{python}
+#| label: fig-correlacion
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5
+
+fig, ax = plt.subplots(figsize=(8, 5))
+
+x_data = bolivia["rgrowth"].dropna()
+y_data = bolivia.loc[x_data.index, "Inflacion"].dropna()
+x_clean = x_data.loc[y_data.index]
+y_clean = y_data
+
+# Línea de tendencia
+m, b = np.polyfit(x_clean, y_clean, 1)
+x_line = np.linspace(x_clean.min(), x_clean.max(), 100)
+ax.plot(x_line, m * x_line + b, color="red", linewidth=1.5, alpha=0.8)
+
+ax.scatter(x_clean, y_clean, color="steelblue", edgecolors="black", s=60, alpha=0.85)
+ax.set_title("Relación entre Crecimiento del PIB real e Inflación\n(Bolivia, >1990)")
+ax.set_xlabel("\nCrecimiento del PIB real (%)")
+ax.set_ylabel("Inflación (%)")
+plt.tight_layout()
+plt.show()
+```
+
+. . .
+
+En este caso la relación _parece_ no lineal, por lo que el coeficiente de
+correlación podría no ser la métrica más adecuada para representar el grado
+de relación entre ambas variables.

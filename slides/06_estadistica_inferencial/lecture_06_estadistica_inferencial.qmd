@@ -1,0 +1,557 @@
+---
+title: "Estadística Inferencial"
+subtitle: "Clase 6 — Curso de Estadística en Python"
+author: "CENACE"
+date: today
+lang: es
+---
+
+```{python}
+#| label: setup
+#| include: false
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import scipy.stats as stats
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+import warnings
+
+warnings.filterwarnings("ignore")
+
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.size": 13,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+})
+```
+
+```{python}
+#| label: carga-datos
+#| include: false
+
+data = pd.read_csv("../../data/raw/Data_FMI.csv")
+data = data[(data["Año"] >= 2000) & (data["Año"] <= 2023)].reset_index(drop=True)
+data_2023 = data[data["Año"] == 2023].copy()
+```
+
+# Introducción
+
+La **estadística inferencial** nos permite sacar conclusiones sobre una
+_población_ a partir de una _muestra_. A diferencia de la estadística
+descriptiva, que solo describe los datos disponibles, la inferencial utiliza
+herramientas probabilísticas para generalizar resultados con cierto grado de
+confianza.
+
+## ¿Por qué inferencia estadística?
+
+. . .
+
+En la práctica, rara vez tenemos acceso a todos los datos de una población.
+
+. . .
+
+- ¿Cuál es el PIB per cápita promedio de todos los países del mundo?
+- ¿Ha cambiado significativamente la inflación en Latinoamérica entre 2010 y 2023?
+
+. . .
+
+Con la inferencia estadística podemos responder estas preguntas de manera
+rigurosa a partir de muestras de datos.
+
+# Distribuciones de probabilidad
+
+Una **distribución de probabilidad** describe cómo se distribuyen los posibles
+valores de una variable aleatoria. Son la base de toda la estadística
+inferencial.
+
+## Distribución normal
+
+La **distribución normal** (o gaussiana) es la más importante en estadística.
+Su función de densidad es:
+
+$$f(x) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{1}{2}\left(\frac{x-\mu}{\sigma}\right)^2}$$
+
+Donde $\mu$ es la media y $\sigma$ es la desviación estándar.
+
+. . .
+
+Propiedades importantes:
+
+- Es simétrica alrededor de la media.
+- El 68 % de los datos cae dentro de $\mu \pm \sigma$.
+- El 95 % de los datos cae dentro de $\mu \pm 2\sigma$.
+- El 99.7 % de los datos cae dentro de $\mu \pm 3\sigma$.
+
+---
+
+```{python}
+#| label: fig-normal
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+
+x = np.linspace(-4, 4, 500)
+y = stats.norm.pdf(x)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(x, y, color="steelblue", linewidth=2)
+
+# Sombrear regiones
+for n_sigma, color, alpha, label in [
+    (3, "steelblue", 0.15, "99.7 %"),
+    (2, "steelblue", 0.25, "95 %"),
+    (1, "steelblue", 0.40, "68 %"),
+]:
+    ax.fill_between(x, y, where=(np.abs(x) <= n_sigma),
+                    color=color, alpha=alpha, label=f"μ ± {n_sigma}σ  ({label})")
+
+ax.axvline(0, color="black", linewidth=1, linestyle="--")
+ax.set_title("Distribución Normal Estándar")
+ax.set_xlabel("Valor (σ)")
+ax.set_ylabel("Densidad de probabilidad")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+## Distribución t de Student
+
+La **distribución t de Student** se utiliza cuando la muestra es pequeña y/o
+la desviación estándar poblacional es desconocida.
+
+. . .
+
+A medida que los grados de libertad ($\nu$) aumentan, la distribución t se
+aproxima a la distribución normal.
+
+```{python}
+#| label: fig-t-dist
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+
+x = np.linspace(-4, 4, 500)
+fig, ax = plt.subplots(figsize=(9, 5))
+
+ax.plot(x, stats.norm.pdf(x), color="black", linewidth=2,
+        linestyle="--", label="Normal")
+for df, color in [(1, "red"), (5, "orange"), (30, "green")]:
+    ax.plot(x, stats.t.pdf(x, df=df), linewidth=1.8,
+            color=color, label=f"t (ν={df})")
+
+ax.set_title("Distribución t de Student vs Normal")
+ax.set_xlabel("Valor")
+ax.set_ylabel("Densidad de probabilidad")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+## Otras distribuciones comunes
+
+| Distribución | Uso principal |
+|---|---|
+| **Normal** | Variables continuas simétricas |
+| **t de Student** | Pruebas con muestras pequeñas |
+| **Chi-cuadrado** ($\chi^2$) | Pruebas de bondad de ajuste y contingencia |
+| **F de Snedecor** | Comparación de varianzas (ANOVA) |
+| **Binomial** | Variables discretas binarias |
+| **Poisson** | Conteo de eventos raros |
+
+# Intervalos de confianza
+
+Un **intervalo de confianza** (IC) es un rango de valores que, con cierta
+probabilidad (nivel de confianza), contiene el verdadero valor del parámetro
+poblacional.
+
+## Concepto
+
+Si construimos 100 intervalos de confianza al 95 % a partir de 100 muestras
+diferentes, esperamos que aproximadamente 95 de ellos contengan el verdadero
+valor del parámetro.
+
+. . .
+
+El IC para la media poblacional con varianza desconocida es:
+
+$$\bar x \pm t_{\alpha/2,\, n-1} \cdot \frac{s}{\sqrt{n}}$$
+
+Donde:
+
+- $\bar x$ es la media muestral.
+- $t_{\alpha/2,\,n-1}$ es el cuantil de la distribución t.
+- $s$ es la desviación estándar muestral.
+- $n$ es el tamaño de la muestra.
+
+## Ejemplo: IC para el PIB per cápita
+
+Calculamos el intervalo de confianza al 95 % para el PIB per cápita promedio
+de los países en 2023.
+
+```{python}
+#| label: ic-gdppc
+
+gdppc_2023 = data_2023["GDPpc_usd"].dropna() / 1000
+
+n = len(gdppc_2023)
+media = gdppc_2023.mean()
+se = gdppc_2023.sem()                      # error estándar
+t_crit = stats.t.ppf(0.975, df=n - 1)     # cuantil t al 95 %
+
+ic_inf = media - t_crit * se
+ic_sup = media + t_crit * se
+
+print(f"Media muestral:       ${media:,.2f}k")
+print(f"IC 95 %: [${ic_inf:,.2f}k, ${ic_sup:,.2f}k]")
+```
+
+. . .
+
+Usando `scipy.stats`:
+
+```{python}
+#| label: ic-scipy
+
+ic = stats.t.interval(0.95, df=n - 1, loc=media, scale=se)
+print(f"IC 95 % (scipy): [{ic[0]:,.2f}k, {ic[1]:,.2f}k]")
+```
+
+---
+
+```{python}
+#| label: fig-ic
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+
+rng = np.random.default_rng(42)
+poblacion = gdppc_2023.values
+
+n_ics = 50
+tam_muestra = 30
+ics = []
+for _ in range(n_ics):
+    muestra = rng.choice(poblacion, size=tam_muestra, replace=False)
+    m = muestra.mean()
+    s = muestra.std(ddof=1)
+    t = stats.t.ppf(0.975, df=tam_muestra - 1)
+    ics.append((m, m - t * s / np.sqrt(tam_muestra),
+                m + t * s / np.sqrt(tam_muestra)))
+
+media_real = poblacion.mean()
+
+fig, ax = plt.subplots(figsize=(9, 5))
+for i, (m, lo, hi) in enumerate(ics):
+    color = "steelblue" if lo <= media_real <= hi else "red"
+    ax.plot([lo, hi], [i, i], color=color, linewidth=1.2)
+    ax.plot(m, i, "o", color=color, markersize=3)
+
+ax.axvline(media_real, color="black", linewidth=2, linestyle="--",
+           label=f"Media real (${media_real:,.1f}k)")
+ax.set_title("50 intervalos de confianza al 95 % (muestras aleatorias)")
+ax.set_xlabel("PIB per cápita (miles USD)")
+ax.set_ylabel("Muestra n°")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+# Pruebas de hipótesis
+
+Una **prueba de hipótesis** es un procedimiento estadístico que nos permite
+tomar una decisión sobre una afirmación (hipótesis) acerca de una población,
+utilizando evidencia muestral.
+
+## Estructura de una prueba de hipótesis
+
+. . .
+
+1. **Hipótesis nula ($H_0$)**: afirmación a "probar" (usualmente de igualdad
+   o ausencia de efecto).
+2. **Hipótesis alternativa ($H_1$)**: afirmación que queremos demostrar.
+3. **Estadístico de prueba**: valor calculado a partir de la muestra.
+4. **Valor p** (_p-value_): probabilidad de obtener un resultado tan extremo
+   como el observado, bajo $H_0$.
+5. **Decisión**: rechazar $H_0$ si el valor p es menor que el nivel de
+   significancia $\alpha$ (usualmente 0.05).
+
+## Prueba t de una muestra
+
+Queremos saber si el PIB per cápita promedio mundial en 2023 es
+significativamente diferente de USD 20 000.
+
+$$H_0: \mu = 20 \quad \text{vs} \quad H_1: \mu \neq 20 \quad \text{(miles USD)}$$
+
+```{python}
+#| label: t-test-una-muestra
+
+t_stat, p_value = stats.ttest_1samp(gdppc_2023.dropna(), popmean=20)
+print(f"Estadístico t: {t_stat:.4f}")
+print(f"Valor p:       {p_value:.4f}")
+print()
+if p_value < 0.05:
+    print("Rechazamos H₀: la media es significativamente diferente de $20k.")
+else:
+    print("No rechazamos H₀: no hay evidencia suficiente.")
+```
+
+## Prueba t de dos muestras
+
+Comparamos el PIB per cápita promedio entre dos grupos de países en 2023.
+
+```{python}
+#| label: t-test-dos-muestras
+
+ocde = data_2023[data_2023["Continent"] == "Europe"]["GDPpc_usd"].dropna() / 1000
+latam = data_2023[data_2023["Continent"] == "Americas"]["GDPpc_usd"].dropna() / 1000
+
+t_stat, p_value = stats.ttest_ind(ocde, latam, equal_var=False)
+print(f"Media Europa:   ${ocde.mean():,.2f}k")
+print(f"Media Américas: ${latam.mean():,.2f}k")
+print(f"Estadístico t:  {t_stat:.4f}")
+print(f"Valor p:        {p_value:.6f}")
+```
+
+. . .
+
+```{python}
+#| label: t-test-decision
+
+if p_value < 0.05:
+    print("Rechazamos H₀: las medias son significativamente distintas.")
+else:
+    print("No rechazamos H₀: no hay evidencia de diferencia significativa.")
+```
+
+## Prueba chi-cuadrado de independencia
+
+La **prueba chi-cuadrado** ($\chi^2$) permite evaluar si existe una asociación
+entre dos variables categóricas.
+
+```{python}
+#| label: chi-cuadrado
+
+# Crear variable categórica de nivel de ingresos
+data_2023_clean = data_2023.dropna(subset=["GDPpc_usd", "Continent"]).copy()
+mediana_gdppc = data_2023_clean["GDPpc_usd"].median()
+data_2023_clean["nivel_ingreso"] = np.where(
+    data_2023_clean["GDPpc_usd"] >= mediana_gdppc, "Alto", "Bajo"
+)
+
+tabla_contingencia = pd.crosstab(
+    data_2023_clean["Continent"],
+    data_2023_clean["nivel_ingreso"]
+)
+chi2, p_val, dof, expected = stats.chi2_contingency(tabla_contingencia)
+
+print(f"Chi-cuadrado: {chi2:.4f}")
+print(f"Grados de libertad: {dof}")
+print(f"Valor p: {p_val:.6f}")
+```
+
+## ANOVA de una vía
+
+El **ANOVA** (Análisis de Varianza) compara las medias de tres o más grupos.
+
+$$H_0: \mu_1 = \mu_2 = \cdots = \mu_k \quad \text{vs} \quad
+H_1: \text{al menos una media difiere}$$
+
+```{python}
+#| label: anova
+
+grupos = [
+    data_2023[data_2023["Continent"] == c]["GDPpc_usd"].dropna() / 1000
+    for c in data_2023["Continent"].dropna().unique()
+]
+
+f_stat, p_val = stats.f_oneway(*grupos)
+print(f"Estadístico F: {f_stat:.4f}")
+print(f"Valor p:       {p_val:.6f}")
+
+if p_val < 0.05:
+    print("Rechazamos H₀: al menos una región tiene media diferente.")
+```
+
+# Regresión lineal
+
+La **regresión lineal** modela la relación entre una variable dependiente ($y$)
+y una o más variables independientes ($x$).
+
+## Regresión lineal simple
+
+El modelo de regresión lineal simple es:
+
+$$y_i = \beta_0 + \beta_1 x_i + \varepsilon_i$$
+
+Donde:
+
+- $\beta_0$ es el intercepto.
+- $\beta_1$ es la pendiente.
+- $\varepsilon_i \sim \mathcal{N}(0, \sigma^2)$ es el error aleatorio.
+
+. . .
+
+Los parámetros se estiman minimizando la suma de cuadrados de los residuos
+(**Mínimos Cuadrados Ordinarios, MCO**):
+
+$$\min_{\beta_0,\,\beta_1} \sum_{i=1}^n (y_i - \beta_0 - \beta_1 x_i)^2$$
+
+## Ejemplo: PIB per cápita y esperanza de vida
+
+Ajustamos un modelo de regresión para explorar la relación entre el PIB per
+cápita y el crecimiento económico en 2023.
+
+```{python}
+#| label: regresion-simple
+
+datos_reg = data_2023.dropna(subset=["GDPpc_usd", "rgrowth"]).copy()
+datos_reg["GDPpc_miles"] = datos_reg["GDPpc_usd"] / 1000
+
+modelo = smf.ols("rgrowth ~ GDPpc_miles", data=datos_reg).fit()
+print(modelo.summary().tables[1])
+```
+
+---
+
+```{python}
+#| label: fig-regresion-simple
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+
+x_vals = datos_reg["GDPpc_miles"]
+y_vals = datos_reg["rgrowth"]
+x_line = np.linspace(x_vals.min(), x_vals.max(), 200)
+y_pred = modelo.params["Intercept"] + modelo.params["GDPpc_miles"] * x_line
+
+fig, ax = plt.subplots(figsize=(9, 5))
+ax.scatter(x_vals, y_vals, color="steelblue", edgecolors="black",
+           alpha=0.7, s=40, label="Datos 2023")
+ax.plot(x_line, y_pred, color="red", linewidth=2, label="Regresión lineal")
+ax.set_title("Regresión: Crecimiento del PIB real ~ PIB per cápita (2023)")
+ax.set_xlabel("\nPIB per cápita (miles USD)")
+ax.set_ylabel("Crecimiento del PIB real (%)")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+## Regresión lineal múltiple
+
+El modelo de regresión lineal múltiple extiende el modelo simple a varias
+variables explicativas:
+
+$$y_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + \cdots + \beta_k x_{ki}
++ \varepsilon_i$$
+
+```{python}
+#| label: regresion-multiple
+
+datos_mult = data_2023.dropna(subset=["GDPpc_usd", "rgrowth", "Inflacion"]).copy()
+datos_mult["GDPpc_miles"] = datos_mult["GDPpc_usd"] / 1000
+
+modelo_mult = smf.ols(
+    "rgrowth ~ GDPpc_miles + Inflacion",
+    data=datos_mult
+).fit()
+print(modelo_mult.summary().tables[1])
+```
+
+## Diagnóstico del modelo
+
+Es importante verificar que los supuestos del modelo de regresión se cumplan.
+
+```{python}
+#| label: fig-diagnostico
+#| echo: false
+#| fig-width: 11
+#| fig-height: 9
+
+residuos = modelo_mult.resid
+ajustados = modelo_mult.fittedvalues
+
+fig, axes = plt.subplots(2, 2, figsize=(11, 9))
+
+# 1. Residuos vs valores ajustados
+axes[0, 0].scatter(ajustados, residuos, color="steelblue",
+                   edgecolors="black", alpha=0.7, s=30)
+axes[0, 0].axhline(0, color="red", linewidth=1.5, linestyle="--")
+axes[0, 0].set_title("Residuos vs Valores Ajustados")
+axes[0, 0].set_xlabel("Valores ajustados")
+axes[0, 0].set_ylabel("Residuos")
+
+# 2. Q-Q plot
+stats.probplot(residuos, plot=axes[0, 1])
+axes[0, 1].set_title("Q-Q Plot de Residuos")
+
+# 3. Histograma de residuos
+axes[1, 0].hist(residuos, bins=20, color="steelblue",
+                edgecolor="black", linewidth=0.5)
+axes[1, 0].set_title("Histograma de Residuos")
+axes[1, 0].set_xlabel("Residuos")
+axes[1, 0].set_ylabel("Frecuencia")
+
+# 4. Residuos estandarizados
+residuos_std = (residuos - residuos.mean()) / residuos.std()
+axes[1, 1].scatter(ajustados, residuos_std, color="steelblue",
+                   edgecolors="black", alpha=0.7, s=30)
+axes[1, 1].axhline(0, color="red", linewidth=1.5, linestyle="--")
+axes[1, 1].axhline(2, color="orange", linewidth=1, linestyle="--")
+axes[1, 1].axhline(-2, color="orange", linewidth=1, linestyle="--")
+axes[1, 1].set_title("Residuos Estandarizados")
+axes[1, 1].set_xlabel("Valores ajustados")
+axes[1, 1].set_ylabel("Residuos estandarizados")
+
+plt.tight_layout()
+plt.show()
+```
+
+## Bondad de ajuste
+
+El **coeficiente de determinación $R^2$** mide la proporción de la varianza de
+$y$ explicada por el modelo:
+
+$$R^2 = 1 - \frac{\text{SS}_{\text{res}}}{\text{SS}_{\text{tot}}}$$
+
+```{python}
+#| label: r-cuadrado
+
+print(f"R² (modelo simple):   {modelo.rsquared:.4f}")
+print(f"R² (modelo múltiple): {modelo_mult.rsquared:.4f}")
+print()
+print(f"R² ajustado (múltiple): {modelo_mult.rsquared_adj:.4f}")
+```
+
+. . .
+
+::: {.callout-note title="Nota"}
+El $R^2$ ajustado penaliza la inclusión de variables adicionales que no mejoran
+significativamente el ajuste del modelo. Es preferible al $R^2$ cuando se
+comparan modelos con diferente número de variables.
+:::
+
+# Resumen
+
+## Lo que aprendimos
+
+::: {.incremental}
+- Las **distribuciones de probabilidad** (normal, t de Student, $\chi^2$, F)
+  son la base de la inferencia estadística.
+- Los **intervalos de confianza** permiten estimar parámetros poblacionales con
+  una certeza probabilística.
+- Las **pruebas de hipótesis** (t-test, chi-cuadrado, ANOVA) permiten tomar
+  decisiones basadas en evidencia muestral.
+- La **regresión lineal** modela relaciones entre variables y permite hacer
+  predicciones.
+:::
+
+. . .
+
+::: {.callout-tip title="Próximos pasos"}
+Explorar técnicas más avanzadas: regresión logística, series de tiempo,
+modelos de panel y aprendizaje automático.
+:::
