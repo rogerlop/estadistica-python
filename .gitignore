@@ -105,7 +105,19 @@ ipython_config.py
 _site/
 *_files/
 *.html
+!index.html
+!slides/01_Instalacion/lecture_01_Python_Instalacion.html
+!slides/02_fundamentos_python/lecture_02_fundamentos_python.html
+!slides/03_analisis_python/lecture_03_analisis-python.html
+!slides/04_dataviz/lecture_04_visualizacion.html
 !assets/**/*.html
+
+# Archivos locales
+.DS_Store
+**/.DS_Store
+.virtual_documents/
+.vscode/
+Untitled.ipynb
 
 # poetry
 #   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.

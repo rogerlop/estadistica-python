@@ -1,0 +1,1770 @@
+---
+title: "Variables aleatorias y distribuciones de probabilidad"
+subtitle: "Fundamentos conceptuales para la inferencia estadística"
+author: "CENACE"
+date: today
+lang: es
+fontsize: 12pt
+institute: IE University
+format:
+  revealjs:
+    theme: serif
+    fig-align: center
+    self-contained: true
+    css: "../../assets/custom_v2.css"
+    toc: true
+    code-fold: false
+    code-summary: "Check the code"
+    toc-title: "Contenido"
+    toc-location: left
+    toc-depth: 1
+    slide-number: true
+    slide-level: 3
+    link-external-newwindow: true
+    preview-links: true
+    auto-stretch: false
+    transition: fade
+    math: mathjax
+    html-math-method: mathjax
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{python}
+#| label: setup
+#| include: false
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import scipy.stats as stats
+import warnings
+
+warnings.filterwarnings("ignore")
+
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.size": 13,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+})
+```
+
+```{python}
+#| label: carga-datos
+#| include: false
+
+data = pd.read_csv("../../data/raw/Data_FMI.csv")
+data = data[(data["Año"] >= 2000) & (data["Año"] <= 2023)].reset_index(drop=True)
+data_2023 = data[data["Año"] == 2023].copy()
+```
+
+# Introducción
+
+## ¿Por qué empezar con probabilidad?
+
+La estadística inferencial parte de una idea simple pero profunda: los datos observados son solo una de las muchas realizaciones posibles de un fenómeno incierto. Cuando observamos inflación, crecimiento o PIB per cápita, vemos un resultado concreto; antes de observarlo, ese resultado podía haber sido distinto.
+
+. . .
+
+Por eso necesitamos un lenguaje formal para representar incertidumbre. Ese lenguaje es la probabilidad. Las variables aleatorias y sus distribuciones permiten pasar de una descripción de datos observados a un modelo del proceso que pudo haberlos generado.
+
+. . .
+
+$$
+\text{datos observados}
+\quad \longrightarrow \quad
+\text{modelo probabilístico}
+\quad \longrightarrow \quad
+\text{inferencia}
+$$
+
+## Describir no es inferir
+
+En estadística descriptiva calculamos medias, medianas, desviaciones estándar y gráficos. Todo eso resume una base de datos concreta. La inferencia estadística, en cambio, pregunta qué podemos decir sobre una población o un proceso a partir de una muestra.
+
+. . .
+
+La diferencia es conceptual. Una media muestral describe lo observado; una esperanza matemática describe el centro de una distribución. Un histograma describe los datos disponibles; una densidad describe cómo se asigna probabilidad a posibles valores antes de observarlos.
+
+. . .
+
+::: {.callout-note title="Idea central"}
+La inferencia estadística requiere tratar algunos objetos —como la media muestral— como variables aleatorias, porque su valor cambiaría si repitiéramos el proceso de muestreo.
+:::
+
+## Mapa de la clase
+
+La clase avanza desde la intuición hacia la formalización. Primero definimos qué es un experimento aleatorio y cómo una variable aleatoria convierte resultados inciertos en números.
+
+. . .
+
+Luego estudiamos distribuciones de probabilidad, diferenciando variables discretas y continuas. Después introducimos los momentos de una distribución: esperanza, varianza y desviación estándar.
+
+. . .
+
+Finalmente revisamos distribuciones especiales que aparecen constantemente en economía, finanzas y estadística aplicada: Bernoulli, binomial, Poisson, uniforme y normal.
+
+# Variables aleatorias
+
+## Experimento aleatorio
+
+Un **experimento aleatorio** es cualquier proceso cuyo resultado no conocemos con certeza, aunque podamos describir de antemano cuáles son sus posibles resultados.
+
+. . .
+
+En economía, un experimento no tiene que ser un experimento de laboratorio. Puede ser observar la tasa de inflación de un país el próximo año, seleccionar aleatoriamente una firma de una base de datos o registrar si un prestatario entra en default durante los próximos doce meses.
+
+. . .
+
+El conjunto de todos los resultados posibles se llama **espacio muestral** y se denota por $S$. Un **evento** es un subconjunto de ese espacio muestral.
+
+$$
+S = \{\text{todos los resultados posibles}\},
+\qquad
+A \subseteq S
+$$
+
+## Del resultado al número
+
+Muchas veces el resultado elemental de un experimento no es numérico. Si seleccionamos un país, el resultado puede ser “Bolivia”, “España”, “Argentina” o “Japón”. Sin embargo, para hacer análisis estadístico necesitamos asociar a cada resultado una magnitud cuantitativa.
+
+. . .
+
+Una **variable aleatoria** transforma cada resultado posible en un número real:
+
+$$
+X:S\to \mathbb{R}
+$$
+
+. . .
+
+Si $X$ representa la inflación anual, entonces $X(\text{Bolivia})$ es la inflación observada para Bolivia. Si $X$ representa el crecimiento real del PIB, entonces $X(\text{España})$ es el crecimiento observado para España.
+
+## Variable aleatoria: definición e intuición
+
+Una **variable aleatoria (VA)** es una función que asigna un valor numérico a cada resultado de un experimento aleatorio. Las VA pueden ser:
+
+  - **Discretas**: Toman un número finito o numerable de valores. Por ejemplo, el número de caras al lanzar una moneda varias veces.
+  - **Continuas**: Pueden tomar cualquier valor dentro de un intervalo. Por ejemplo, la altura de una persona medida en centímetros.
+
+. . .
+
+Las VA son fundamentales en probabilidad porque permiten cuantificar y analizar eventos aleatorios de manera matemática.
+
+. . .
+
+Por ejemplo, si $X$ es una VA que representa el número de caras al lanzar una moneda 3 veces, entonces $X$ puede tomar los valores 0, 1, 2 o 3.
+
+---
+
+Uno puede definir la VA $X$ como:
+
+$$
+X = \begin{cases}
+0 & \text{si no sale cara} \\
+1 & \text{si sale cara una vez} \\
+2 & \text{si sale cara dos veces} \\
+3 & \text{si sale cara tres veces}
+\end{cases}
+$$
+
+. . .
+
+Al final, la VA nos permite transformar eventos aleatorios en números, facilitando su análisis y comprensión.
+
+. . .
+
+Antes de observar el resultado, $X$ es incierta. Después de observarlo, $X$ toma un valor concreto, llamado **realización**.
+
+. . .
+
+$$
+\text{variable aleatoria: } X
+\qquad
+\text{realización observada: } x
+$$
+
+. . .
+
+Cuando escribimos $X$, hablamos del objeto probabilístico. Cuando escribimos $x$, hablamos del dato observado.
+
+
+## Reglas fundamentales de la probabilidad
+
+La asignación de probabilidades a los eventos debe seguir ciertas reglas fundamentales que aseguran consistencia lógica:
+
+. . .
+
+- **Regla de no negatividad**: 
+  - La probabilidad de cualquier evento $A$ es siempre un número entre 0 y 1 inclusive:
+  
+  $$
+  0 \leq P(A) \leq 1
+  $$
+
+. . . 
+
+- **Regla de normalización**: 
+  - La suma de las probabilidades de todos los eventos elementales dentro del espacio muestral debe ser exactamente igual a 1:
+  
+  $$
+  \sum_{X_i \in \Omega} P(X_i) = 1
+  $$
+
+---
+
+- **Probabilidad de eventos compuestos**:
+  - La probabilidad de un evento compuesto $E$ (un conjunto que incluye varios eventos elementales) es igual a la suma de las probabilidades individuales de cada evento elemental que lo compone:
+  
+  $$
+  P(E) = \sum_{X_i \in E} P(X_i)
+  $$
+  
+. . .
+
+Estas reglas proporcionan la estructura básica sobre la cual se desarrollan análisis probabilísticos más complejos y permiten calcular probabilidades incluso en situaciones con muchos eventos posibles.
+
+
+# Distribuciones de probabilidad
+
+## ¿Qué describe una distribución?
+
+La **distribución de probabilidad** de una variable aleatoria describe cómo se reparte la probabilidad entre sus posibles valores.
+
+. . .
+
+En una variable discreta, la distribución asigna probabilidades directamente a valores concretos. En una variable continua, la distribución asigna probabilidades a intervalos, no a puntos individuales.
+
+. . .
+
+$$
+\text{discreta: } P(X=x)
+\qquad
+\text{continua: } P(a\leq X\leq b)
+$$
+
+. . .
+
+También se puede pensar en la distribución como una tabla que nos dice qué tan probable es cada resultado posible.
+
+## Definiciones
+
+Una **distribución de probabilidad** de una VA discreta es el *listado* de todos los posibles valores que dicha variable puede tomar y la probabilidad asociada a cada uno de ellos.
+
+  - Una propiedad clave de las distribuciones de probabilidad es que la suma de todas las probabilidades debe ser igual a 1, $\sum_{x \in S} P(X = x) = 1$
+
+. . .
+
+Al igual que las VA, las distribuciones de probabilidad pueden ser discretas o continuas.
+
+  - En el caso de las discretas, la distribución se llama **función de masa de probabilidad (PMF)**.
+  - En el caso de las continuas, la distribución se llama **función de densidad de probabilidad (PDF)**. 
+
+. . .
+
+Matemáticamente, la PMF de una VA $X$ se denota como $P(X = x) \equiv \sum_{x \in S} P(X = x)$, donde $S$ es el espacio muestral de $X$. En ciertas ocasiones también se denota como $p_X(x)$.
+
+### Ejemplo VA discreta: Monedas
+
+Por ejemplo, si $X$ es el número de caras en 2 lanzamientos de una moneda, ¿cuál es la distribución de probabilidad de $X$?
+
+. . .
+
+En primer lugar, identificamos los posibles resultados de $X$:
+
+$$  
+\begin{array}{|c|c|c|}
+\hline
+\textbf{Evento} & \textbf{Primer lanzamiento} & \textbf{Segundo lanzamiento} \\
+\hline
+1 & \text{Cara} & \text{Cara} \\
+\color{blue}{2} & \text{Cara} & \text{Cruz} \\
+\color{blue}{3} & \text{Cruz} & \text{Cara} \\
+\color{magenta}{4} & \text{Cruz} & \text{Cruz} \\
+\hline
+\end{array}
+$$
+
+. . .
+
+Ahora, mapeamos los posibles resultados con los valores de $X$:
+
+$$
+\begin{array}{|c|c|}
+\hline
+\boldsymbol{X=x} & \boldsymbol{P(X=x)} \\
+\hline
+0 & \frac{\color{magenta}{1}}{4} = 0.25 \\  
+1 & \frac{\color{blue}{2}}{4} = 0.50 \\
+2 & \frac{1}{4} = 0.25 \\
+\hline
+\end{array}
+$$
+
+---
+
+De forma gráfica, la distribución de probabilidad de $X$ se puede representar como un histograma, donde el eje $x$ representa los posibles valores de $X$ y el eje $y$ representa la probabilidad asociada a cada valor:
+
+```{python}
+#| label: fig-distribucion-ejemplo
+#| echo: false
+#| fig-width: 8
+#| fig-height: 4.8
+#| fig-align: center
+#| fig-cap: "Distribución de probabilidad de X: número de caras en 2 lanzamientos"
+
+x = np.array([0, 1, 2])
+prob = np.array([0.25, 0.50, 0.25])
+fig, ax = plt.subplots(figsize=(8, 4.8))
+ax.bar(x, prob, edgecolor="black")
+ax.set_title("Distribución de probabilidad de X: número de caras en 2 lanzamientos")
+ax.set_xlabel("Número de caras (X)")
+ax.set_xticks(x)
+ax.set_ylabel("Probabilidad")
+plt.tight_layout()
+plt.show()
+```
+
+### Ejemplo VA discreta: Inflación alta en países
+
+Una distribución discreta puede entenderse como una lista de valores posibles y sus probabilidades asociadas. Por ejemplo, si $X$ es el número de países con inflación alta en una muestra de 10 países, la distribución de $X$ podría ser:
+
+:::{.columns}
+:::{.column width="30%"}
+
+$$
+\begin{array}{c|cc}
+x & p(X=x)\\
+\hline
+0 & 0.05 \\
+1 & 0.15 \\
+2 & 0.25 \\
+3 & 0.30 \\
+4 & 0.15 \\
+5 & 0.05 \\
+6 & 0.03 \\
+7 & 0.01 \\
+8 & 0.005 \\
+9 & 0.002 \\
+10 & 0.001
+\end{array}
+$$
+:::
+:::{.column width="70%"}
+
+Gráficamente:
+
+```{python}
+#| label: fig-discreta
+#| echo: false
+#| fig-width: 8
+#| fig-height: 4.8
+
+x = np.arange(0, 11)
+prob = np.array([0.05, 0.15, 0.25, 0.30, 0.15, 0.05, 0.03, 0.01, 0.005, 0.002, 0.001])
+fig, ax = plt.subplots(figsize=(8, 4.8))
+ax.bar(x, prob, edgecolor="black")
+ax.set_title("Distribución discreta: número de países con inflación alta")
+ax.set_xlabel("Número de países")
+ax.set_xticklabels(x)
+ax.set_ylabel("Probabilidad")
+plt.tight_layout()
+plt.show()
+```
+
+:::
+:::
+
+
+
+## Ejemplo VA continua: Tasa de inflación anual
+
+Una variable continua puede tomar infinitos valores dentro de un intervalo. Por ejemplo, una tasa de inflación podría ser 2.1%, 2.13%, 2.137%, y así sucesivamente.
+
+. . .
+
+Por esa razón, la probabilidad de observar exactamente un valor puntual es cero:
+
+$$
+P(X=x)=0.
+$$
+
+. . .
+
+Las probabilidades se calculan como áreas bajo una función de densidad:
+
+$$
+P(a\leq X\leq b)=\int_a^b f(x)\,dx.
+$$
+
+---
+
+Por ejemplo, si $X$ es la tasa de inflación anual, su distribución continua _podría_ tener una densidad que se concentra alrededor de 2% o 3%, con colas que se extienden hacia tasas más altas o incluso negativas.
+
+. . . 
+
+```{python}
+#| label: fig-continua
+#| echo: false
+#| fig-width: 8
+#| fig-height: 4.8
+#| fig-align: center
+#| fig-cap: "Distribución continua: tasa de inflación anual"
+
+x = np.linspace(-2, 10, 500)
+# Ejemplo de densidad con media 3% y desviación estándar 1.5%
+mu, sigma = 3, 1.5
+f = stats.norm.pdf(x, loc=mu, scale=sigma)
+fig, ax = plt.subplots(figsize=(8, 4.8))
+ax.plot(x, f, linewidth=2)
+ax.set_title("Distribución continua: tasa de inflación anual")
+ax.set_xlabel("Inflación (%)")
+ax.set_ylabel("Densidad")
+plt.tight_layout()
+plt.show()
+```
+
+## Función de distribución acumulada
+
+La función de distribución acumulada, o CDF, resume la probabilidad de que la variable aleatoria tome un valor menor o igual a $x$.
+
+$$
+F(x)=P(X\leq x)
+$$
+
+. . .
+
+Esta definición sirve tanto para variables discretas como para variables continuas.
+
+. . .
+
+Si $X$ tiene densidad $f(x)$, se suele calcular la CDF integrando la densidad desde $-\infty$ hasta $x$:
+
+$$
+F(x)=\int_{-\infty}^{x} f(t)\,dt.
+$$
+
+---
+
+Se puede pensar la distribución de probabilidad de una VA _discreta_ como una tabla que contiene los posibles valores de la VA $X$ y la probabilidad asociada a cada uno de ellos.
+
+. . .
+
+A veces, nos interesa conocer la probabilidad acumulada de una VA, es decir, la probabilidad de que la VA sea menor o igual a un valor específico $x$. Esta probabilidad se denota como $P(X \le x)$.
+
+. . .
+
+Se calcula sumando las probabilidades de todos los valores. Por ejemplo, en el caso de la VA $X$ definida como el número de caras en 2 lanzamientos de una moneda, la probabilidad acumulada:
+
+$$
+\begin{array}{|c|c|c|}
+\hline
+\boldsymbol{X=x} & \boldsymbol{P(X=x)} & \boldsymbol{P(X \leq x)} \\
+\hline
+0 & \frac{1}{4} = 0.25 & \frac{1}{4} = 0.25 \\
+1 & \frac{2}{4} = 0.50 & \frac{3}{4} = 0.75 \\
+2 & \frac{1}{4} = 0.25 & \frac{4}{4} = 1.00 \\
+\hline
+\end{array}
+$$
+
+. . .
+
+Por ejemplo, la probabilidad de obtener 1 o menos caras en 2 lanzamientos de una moneda es de $0.75$.
+
+### CDF: discreta y continua
+
+De forma más general, la CDF de una VA discreta se puede representar como una función escalonada, mientras que la CDF de una VA continua se representa como una curva suave. Ambas funciones muestran cómo se acumula la probabilidad a medida que aumentamos el valor de $x$.
+
+```{python}
+#| label: fig-cdf
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+
+x_disc = np.arange(0, 11)
+cdf_disc = stats.binom.cdf(x_disc, n=10, p=0.4)
+
+x_cont = np.linspace(-4, 4, 400)
+cdf_cont = stats.norm.cdf(x_cont)
+
+fig, ax = plt.subplots(figsize=(9, 5))
+ax.step(x_disc, cdf_disc, where="post", label="Binomial: CDF escalonada")
+ax.plot(x_cont, cdf_cont, linewidth=2, label="Normal: CDF continua")
+ax.set_title("Función de distribución acumulada")
+ax.set_xlabel("x")
+ax.set_ylabel("F(x)")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+## Cuantiles
+
+Un cuantil es un punto de corte de la distribución. El cuantil $q_\alpha$ deja una probabilidad $\alpha$ a su izquierda:
+
+$$
+P(X\leq q_\alpha)=\alpha.
+$$
+
+. . .
+
+Por ejemplo, en una normal estándar, el cuantil 0.95 es aproximadamente 1.645. Esto significa que el 95% de la distribución queda por debajo de ese valor.
+
+. . .
+
+Los cuantiles son esenciales para construir intervalos de confianza y regiones críticas en pruebas de hipótesis, como veremos en clases posteriores.
+
+### Probabilidades y cuantiles en Python
+
+```{python}
+#| label: scipy-probabilidades
+
+p_central = stats.norm.cdf(1.96) - stats.norm.cdf(-1.96)
+q95 = stats.norm.ppf(0.95)
+
+print(f"P(-1.96 <= Z <= 1.96): {p_central:.4f}")
+print(f"Cuantil 95% de N(0,1): {q95:.4f}")
+
+p_bin = stats.binom.pmf(6, n=10, p=0.5)
+print(f"P(X=6), X~Bin(10,0.5): {p_bin:.4f}")
+```
+
+# Momentos de una distribución
+
+## Esperanza matemática
+
+La esperanza matemática es el promedio teórico de una variable aleatoria bajo su distribución. No se calcula a partir de una muestra específica, sino a partir del modelo probabilístico.
+
+. . .
+
+Para una variable discreta:
+
+$$
+E(X)=\sum_i x_i p(x_i).
+$$
+
+Para una variable continua:
+
+$$
+E(X)=\int_{-\infty}^{\infty}x f(x)\,dx.
+$$
+
+. . .
+
+En términos intuitivos, la esperanza es el centro de gravedad de la distribución.
+
+## Esperanza: cálculo e interpretación
+
+Por ejemplo, supongamos que tenemos la siguiente distribución discreta para el número de países con inflación alta (>10%):
+
+
+:::{.incremental}
+:::{.columns}
+:::{.column width="30%"}
+$$
+\begin{array}{c|cc}
+x & p(X=x)\\
+\hline
+0 & 0.05 \\
+1 & 0.15 \\
+2 & 0.25 \\
+3 & 0.30 \\
+4 & 0.20 \\
+5 & 0.05 \\
+\end{array}
+$$
+
+:::
+:::{.column width="70%"}
+
+Calculamos la esperanza:
+$$
+\begin{aligned}
+E(X) &= \sum_i x_i p(x_i) \\
+&= 0(0.05) + 1(0.15) + 2(0.25) + 3(0.30) + 4(0.20) + 5(0.05) \\
+&= 2.75.
+\end{aligned}
+$$
+
+
+Esto significa que, en promedio, esperaríamos que 2.75 países tengan inflación alta en esta muestra hipotética.
+:::
+:::
+:::
+
+## Esperanza: interpretación económica
+
+En economía, la esperanza puede representar un rendimiento esperado, una pérdida esperada, una inflación esperada o un crecimiento esperado.
+
+. . .
+
+Pero “esperado” no significa “garantizado”. Una economía puede tener crecimiento esperado positivo y, aun así, enfrentar una probabilidad considerable de recesión.
+
+. . .
+
+Por eso una distribución no se resume adecuadamente solo con su media. También importan la dispersión, la asimetría y la probabilidad de eventos extremos.
+
+## Varianza y desviación estándar
+
+La varianza mide la dispersión promedio alrededor de la esperanza. Si $\mu=E(X)$, entonces:
+
+$$
+Var(X)=E[(X-\mu)^2].
+$$
+
+. . .
+
+Una forma equivalente, útil para cálculos, es:
+
+$$
+Var(X)=E(X^2)-[E(X)]^2.
+$$
+
+. . .
+
+La desviación estándar es la raíz cuadrada de la varianza:
+
+$$
+\sigma=\sqrt{Var(X)}.
+$$
+
+Se expresa en las mismas unidades que la variable original.
+
+## Muestra versus población
+
+En la práctica, casi nunca conocemos la distribución poblacional completa. Observamos una muestra:
+
+$$
+x_1,x_2,\ldots,x_n.
+$$
+
+. . .
+
+La media muestral es:
+
+$$
+\bar{x}=\frac{1}{n}\sum_{i=1}^{n}x_i.
+$$
+
+La varianza muestral usual es:
+
+$$
+s^2=\frac{1}{n-1}\sum_{i=1}^{n}(x_i-\bar{x})^2.
+$$
+
+. . .
+
+El denominador $n-1$ corrige el sesgo al estimar la varianza poblacional. En Python, esto corresponde a usar `ddof=1`.
+
+## PIB per cápita como variable aleatoria
+
+```{python}
+#| label: resumen-gdppc
+
+gdppc = data_2023["GDPpc_usd"].dropna() / 1000
+
+print(f"Observaciones:       {len(gdppc)}")
+print(f"Media muestral:      {gdppc.mean():,.2f}")
+print(f"Mediana muestral:    {gdppc.median():,.2f}")
+print(f"Desv. estándar s:    {gdppc.std(ddof=1):,.2f}")
+print(f"Asimetría muestral:  {gdppc.skew():,.2f}")
+```
+
+## Distribución empírica del PIB per cápita
+
+```{python}
+#| label: fig-gdppc-hist
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+
+fig, ax = plt.subplots(figsize=(9, 5))
+ax.hist(gdppc, bins=35, edgecolor="black", linewidth=0.4)
+ax.axvline(gdppc.mean(), linewidth=2, linestyle="--", label="Media")
+ax.axvline(gdppc.median(), linewidth=2, linestyle=":", label="Mediana")
+ax.set_title("PIB per cápita en 2023: distribución empírica")
+ax.set_xlabel("PIB per cápita (miles de USD)")
+ax.set_ylabel("Frecuencia")
+ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"${x:.0f}k"))
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+# Distribuciones especiales
+
+## Motivación
+
+Algunas distribuciones de probabilidad aparecen con tanta frecuencia en estadística aplicada que reciben nombres propios.
+
+. . .
+
+Estas distribuciones son útiles porque resumen situaciones recurrentes: conteos de éxitos, variables aproximadamente simétricas, incertidumbre sobre medias, varianzas y cocientes de varianzas.
+
+. . .
+
+En esta sección estudiaremos cinco distribuciones fundamentales:
+
+$$
+\text{Binomial}, \qquad \text{Normal}, \qquad t\text{-Student}, \qquad \chi^2, \qquad F.
+$$
+
+. . .
+
+El objetivo no es memorizar fórmulas, sino reconocer qué tipo de problema ayuda a resolver cada distribución y cómo se relacionan entre sí.
+
+---
+
+Cada distribución responde a una pregunta distinta.
+
+. . .
+
+$$
+\begin{array}{c|c|c}
+\textbf{Distribución} & \textbf{Tipo} & \textbf{Pregunta típica} \\
+\hline
+\text{Binomial} & \text{Discreta} & \text{¿Cuántos éxitos ocurren en } n \text{ ensayos?} \\
+\text{Normal} & \text{Continua} & \text{¿Cómo se distribuye una variable simétrica?} \\
+t\text{-Student} & \text{Continua} & \text{¿Cómo inferir una media con } \sigma \text{ desconocida?} \\
+\chi^2 & \text{Continua} & \text{¿Cómo inferir una varianza?} \\
+F & \text{Continua} & \text{¿Cómo comparar varianzas o modelos?}
+\end{array}
+$$
+
+. . .
+
+Estas distribuciones serán la base de intervalos de confianza, pruebas de hipótesis, ANOVA y regresión lineal.
+
+## Distribución binomial
+
+### Experimento binomial
+
+La **distribución binomial** modela el número de éxitos en una secuencia de ensayos con dos resultados posibles.
+
+. . .
+
+Un experimento binomial requiere cuatro condiciones:
+
+:::{.callout-note title="Condiciones para un experimento binomial"}
+
+1. Hay un número fijo de ensayos: $n$.
+2. Cada ensayo tiene dos resultados: éxito o fracaso.
+3. La probabilidad de éxito es constante: $p$.
+4. Los ensayos son independientes.
+:::
+
+. . .
+
+Si $X$ representa el número de éxitos, entonces:
+
+$$
+X \sim Bin(n,p).
+$$
+
+
+### Ejemplo: dados con Pikachu
+
+Supongamos que tenemos un dado de 6 caras. Todas las caras están en blanco excepto una, que tiene dibujado un Pikachu.
+
+:::{.columns}
+:::{.column width="40%"}
+
+![Dado con Pikachu](../../assets/Imagenes/dadow.png){width="90%" fig-align="center"}
+
+:::
+
+:::{.column width="60%"}
+:::{.fragment}
+
+La probabilidad de obtener Pikachu en un lanzamiento es:
+
+$$
+p=P(\text{Pikachu})=\frac{1}{6}\approx 0.167.
+$$
+
+:::
+:::{.fragment}
+
+Si lanzamos 20 dados iguales, o lanzamos el mismo dado 20 veces, definimos:
+
+$$
+X=\text{número de Pikachus en 20 lanzamientos}.
+$$
+
+:::
+:::{.fragment}
+
+Entonces:
+
+$$
+X\sim Bin\left(20,\frac{1}{6}\right).
+$$
+
+:::
+:::
+:::
+
+
+
+### Función de probabilidad binomial
+
+Si $X\sim Bin(n,p)$, la probabilidad de observar exactamente $x$ éxitos es:
+
+$$
+P(X=x)=\binom{n}{x}p^x(1-p)^{n-x},
+\qquad x=0,1,\ldots,n.
+$$
+
+. . .
+
+El término combinatorio es:
+
+$$
+\binom{n}{x}=\frac{n!}{x!(n-x)!}.
+$$
+
+. . .
+
+Este término cuenta cuántas formas distintas existen de ubicar $x$ éxitos entre $n$ ensayos.
+
+
+#### Cálculo para el ejemplo
+
+Queremos calcular la probabilidad de obtener exactamente 4 Pikachus en 20 lanzamientos.
+
+. . .
+
+En este caso:
+
+$$
+n=20, \qquad x=4, \qquad p=\frac{1}{6}.
+$$
+
+. . .
+
+Sustituyendo en la fórmula:
+
+$$
+\begin{aligned}
+P(X=4) &= \binom{20}{4} \cdot \left(\frac{1}{6}\right)^4 \cdot \left(1-\frac{1}{6}\right)^{16}
+\\
+&=\frac{20!}{4!(20-4)!}
+\left(\frac{1}{6}\right)^4
+\left(1-\frac{1}{6}\right)^{16} 
+\\ 
+&=4845 \cdot 0.0007716 \cdot 0.05408
+\\
+&\approx 0.2022.
+\end{aligned}
+$$
+
+. . .
+
+Que se interpreta como una probabilidad del 20.22% de obtener exactamente 4 Pikachus en 20 lanzamientos.
+
+
+#### Cálculo en Python
+
+En Python usamos `stats.binom.pmf`.
+
+. . .
+
+```{python}
+#| label: binomial-pikachu
+
+n = 20
+x = 4
+p = 1 / 6
+
+probabilidad = stats.binom.pmf(x, n=n, p=p)
+
+print(f"P(X = 4) = {probabilidad:.4f}")
+print(f"En porcentaje: {100 * probabilidad:.2f}%")
+```
+
+. . .
+
+Donde obtenemos la misma probabilidad de aproximadamente 20.22%.
+
+#### Distribución completa
+
+La distribución completa de $X$ se puede visualizar con un gráfico de barras, donde el eje $x$ representa el número de Pikachus y el eje $y$ representa la probabilidad de cada resultado.
+
+. . .
+
+```{python}
+#| label: fig-binomial-pikachu
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5.2
+
+n = 20
+p = 1 / 6
+x_values = np.arange(0, n + 1)
+probabilities = stats.binom.pmf(x_values, n=n, p=p)
+
+fig, ax = plt.subplots(figsize=(8, 5.2))
+ax.bar(x_values, probabilities, edgecolor="black")
+ax.axvline(4, linestyle="--", linewidth=2, label="X = 4")
+ax.set_title("Distribución binomial: número de Pikachus en 20 lanzamientos")
+ax.set_xlabel("Número de Pikachus")
+ax.set_ylabel("Probabilidad")
+ax.set_xticks(np.arange(0, 21, 2))
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+
+
+
+### Media y varianza binomial
+
+Si $X\sim Bin(n,p)$, entonces:
+
+$$
+E(X)=np
+$$
+
+y
+
+$$
+Var(X)=np(1-p).
+$$
+
+. . .
+
+En el ejemplo:
+
+$$
+E(X)=20\cdot \frac{1}{6}\approx 3.33.
+$$
+
+. . .
+
+El número esperado de Pikachus es 3.33, aunque $X$ solo pueda tomar valores enteros.
+
+
+### Media y varianza en Python
+
+```{python}
+#| label: binomial-momentos
+
+n = 20
+p = 1 / 6
+
+media = stats.binom.mean(n=n, p=p)
+varianza = stats.binom.var(n=n, p=p)
+desv = stats.binom.std(n=n, p=p)
+
+print(f"E(X)     = {media:.4f}")
+print(f"Var(X)   = {varianza:.4f}")
+print(f"sd(X)    = {desv:.4f}")
+```
+
+## Distribución normal
+
+### Motivación
+
+La **distribución normal** es una distribución continua, simétrica y con forma de campana.
+
+. . .
+
+Su importancia proviene de dos razones:
+1. Muchas variables empíricas pueden aproximarse razonablemente con una normal.
+2. Muchos estimadores y promedios muestrales se aproximan a una normal bajo condiciones generales.
+
+. . .
+
+Por eso la normal aparece de manera central en intervalos de confianza, pruebas de hipótesis y modelos de regresión, que son herramientas fundamentales en estadística aplicada.
+
+
+### Definición
+
+Si $X$ sigue una distribución normal con media $\mu$ y varianza $\sigma^2$, escribimos:
+
+$$
+X\sim N(\mu,\sigma^2).
+$$
+
+. . .
+
+Su función de densidad es:
+
+$$
+f_X(x)=
+\frac{1}{\sigma\sqrt{2\pi}}
+\exp\left[
+-\frac{1}{2}
+\left(\frac{x-\mu}{\sigma}\right)^2
+\right],
+\qquad -\infty<x<\infty.
+$$
+
+. . .
+
+El parámetro $\mu$ determina el centro de la distribución y $\sigma$ determina su dispersión.
+
+
+
+### Dos distribuciones normales
+
+Por ejemplo, en el siguiente gráfico se comparan dos normales: $N(0,1)$ y $N(1.5,1.5^2)$:
+
+. . .
+
+```{python}
+#| label: fig-normal-comparacion
+#| echo: false
+#| fig-width: 8
+#| fig-height: 4.8
+
+x_values = np.linspace(-6, 8, 1000)
+
+mu1, sigma1 = 0, 1
+mu2, sigma2 = 1.5, 1.5
+
+normal_1 = stats.norm.pdf(x_values, loc=mu1, scale=sigma1)
+normal_2 = stats.norm.pdf(x_values, loc=mu2, scale=sigma2)
+
+fig, ax = plt.subplots(figsize=(8, 4.8))
+ax.plot(x_values, normal_1, linewidth=2, label=r"$N(0,1)$")
+ax.plot(x_values, normal_2, linewidth=2, label=r"$N(1.5,1.5^2)$")
+ax.set_title("Distribuciones normales")
+ax.set_xlabel("x")
+ax.set_ylabel("Densidad")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+
+### Normal estándar
+
+La **normal estándar** es el caso particular con media 0 y varianza 1:
+
+$$
+Z\sim N(0,1).
+$$
+
+. . .
+
+Cualquier variable normal puede estandarizarse:
+
+$$
+Z=\frac{X-\mu}{\sigma}.
+$$
+
+. . .
+
+Esta transformación expresa un valor en unidades de desviación estándar respecto de la media.
+
+. . .
+
+Por ejemplo, $Z=2$ indica que el valor está dos desviaciones estándar por encima de la media.
+
+
+### Regla empírica
+
+Si $X\sim N(\mu,\sigma^2)$, entonces aproximadamente:
+
+$$
+P(\mu-\sigma\leq X\leq \mu+\sigma)\approx 0.68,
+$$
+
+$$
+P(\mu-2\sigma\leq X\leq \mu+2\sigma)\approx 0.95,
+$$
+
+$$
+P(\mu-3\sigma\leq X\leq \mu+3\sigma)\approx 0.997.
+$$
+
+. . .
+
+Esta regla es una propiedad aproximada de la distribución normal, no una regla universal para cualquier variable.
+
+
+### Regla empírica visual
+
+```{python}
+#| label: fig-normal-regla
+#| echo: false
+#| fig-width: 8
+#| fig-height: 4.8
+
+x = np.linspace(-4, 4, 800)
+y = stats.norm.pdf(x)
+
+fig, ax = plt.subplots(figsize=(8, 4.8))
+ax.plot(x, y, linewidth=2)
+
+for k, alpha in [(1, 0.35), (2, 0.22), (3, 0.12)]:
+    ax.fill_between(x, y, where=(np.abs(x) <= k), alpha=alpha, label=fr"$\mu \pm {k}\sigma$")
+
+ax.axvline(0, linestyle="--", linewidth=1)
+ax.set_title("Normal estándar y regla empírica")
+ax.set_xlabel("z")
+ax.set_ylabel("Densidad")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+. . .
+
+
+### Funciones en Python
+
+En `scipy.stats`, la distribución normal se trabaja con `stats.norm`.
+
+. . .
+
+Las funciones principales son:
+
+$$
+\begin{array}{c|c}
+\textbf{Función} & \textbf{Uso} \\
+\hline
+\texttt{pdf} & \text{densidad } f(x) \\
+\texttt{cdf} & \text{probabilidad acumulada } P(X\leq x) \\
+\texttt{ppf} & \text{cuantil } q_\alpha \\
+\texttt{rvs} & \text{simulación aleatoria}
+\end{array}
+$$
+
+
+### Cálculo en Python
+
+```{python}
+#| label: normal-python
+
+mu = 0
+sigma = 1
+
+densidad_0 = stats.norm.pdf(0, loc=mu, scale=sigma)
+prob_hasta_1 = stats.norm.cdf(1, loc=mu, scale=sigma)
+cuantil_95 = stats.norm.ppf(0.95, loc=mu, scale=sigma)
+prob_intervalo = stats.norm.cdf(2, loc=mu, scale=sigma) - stats.norm.cdf(-1, loc=mu, scale=sigma)
+
+print(f"f(0):                  {densidad_0:.4f}")
+print(f"P(X <= 1):             {prob_hasta_1:.4f}")
+print(f"q_0.95:                {cuantil_95:.4f}")
+print(f"P(-1 <= X <= 2):       {prob_intervalo:.4f}")
+```
+
+
+## Distribución t-Student
+
+### Motivación
+
+La **distribución t-Student** aparece en inferencia sobre medias cuando la desviación estándar poblacional $\sigma$ es desconocida y debe estimarse con la desviación estándar muestral $S$.
+
+. . .
+
+Originalmente, William Sealy Gosset (bajo el seudónimo "Student") desarrolló esta distribución para resolver problemas prácticos en la industria cervecera (Guinness) relacionados con muestras pequeñas de datos.
+
+. . .
+
+Gosset era un químico y estadístico que enfrentaba el desafío de hacer inferencias sobre la calidad de su cerveza con muestras limitadas. 
+
+---
+
+Por ejemplo, supongamos que queremos conocer la acidez promedio de una cerveza, pero solo tenemos una muestra de 10 botellas.
+
+
+
+Si la población es normal, entonces el estadístico:
+
+$$
+T=\frac{\bar{X}-\mu}{S/\sqrt{n}}
+$$
+
+sigue una distribución t-Student con $n-1$ grados de libertad.
+
+. . .
+
+Esto justifica su uso en intervalos de confianza y pruebas de hipótesis para la media.
+
+
+
+### Definición
+
+Una variable aleatoria $T$ sigue una distribución t-Student con $\nu$ grados de libertad si su densidad es:
+
+$$
+f_T(t)=
+\frac{\Gamma\left(\frac{\nu+1}{2}\right)}
+{\sqrt{\nu\pi}\,\Gamma\left(\frac{\nu}{2}\right)}
+\left(1+\frac{t^2}{\nu}\right)^{-\frac{\nu+1}{2}},
+\qquad -\infty<t<\infty.
+$$
+
+. . .
+
+Escribimos:
+
+$$
+T\sim t_\nu.
+$$
+
+. . .
+
+El parámetro $\nu$ controla el grosor de las colas.
+
+
+
+### Interpretación
+
+La t-Student es simétrica alrededor de cero, como la normal estándar.
+
+. . .
+
+Para pocos grados de libertad, tiene colas más gruesas que la normal. Esto asigna mayor probabilidad a valores extremos.
+
+. . .
+
+A medida que $\nu$ aumenta, la t-Student se aproxima a la normal estándar.
+
+. . .
+
+Esta corrección refleja la incertidumbre adicional por estimar $\sigma$ usando $S$.
+
+
+### t-Student vs normal
+
+```{python}
+#| label: fig-t-student
+#| echo: false
+#| fig-width: 8
+#| fig-height: 4.8
+
+x = np.linspace(-5, 5, 1000)
+
+fig, ax = plt.subplots(figsize=(8, 4.8))
+ax.plot(x, stats.norm.pdf(x), linewidth=2, linestyle="--", label="Normal estándar")
+
+for df in [3, 10, 30]:
+    ax.plot(x, stats.t.pdf(x, df=df), linewidth=2, label=fr"$t_{{{df}}}$")
+
+ax.set_title("Distribución t-Student y normal estándar")
+ax.set_xlabel("x")
+ax.set_ylabel("Densidad")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+
+### Funciones en Python
+
+En `scipy.stats`, la t-Student se trabaja con `stats.t`.
+
+. . .
+
+Las funciones principales son:
+
+$$
+\begin{array}{c|c}
+\textbf{Función} & \textbf{Uso} \\
+\hline
+\texttt{pdf} & \text{densidad} \\
+\texttt{cdf} & \text{probabilidad acumulada} \\
+\texttt{ppf} & \text{cuantil} \\
+\texttt{rvs} & \text{simulación}
+\end{array}
+$$
+
+. . .
+
+En aplicaciones de inferencia sobre una media, usualmente:
+
+$$
+\nu=n-1.
+$$
+
+
+
+### Cálculo en Python
+
+```{python}
+#| label: t-python
+
+df = 9
+
+densidad_0 = stats.t.pdf(0, df=df)
+prob_hasta_2 = stats.t.cdf(2, df=df)
+critico_95 = stats.t.ppf(0.975, df=df)
+
+print(f"f(0), t_{df}:                  {densidad_0:.4f}")
+print(f"P(T <= 2), t_{df}:             {prob_hasta_2:.4f}")
+print(f"Cuantil 97.5%, t_{df}:         {critico_95:.4f}")
+```
+
+## Distribución chi-cuadrado
+
+### Motivación
+
+La **distribución chi-cuadrado** aparece al estudiar sumas de cuadrados de variables normales estándar.
+
+. . .
+
+Si $Z_1,\ldots,Z_\nu$ son variables normales estándar independientes, entonces:
+
+$$
+X=Z_1^2+Z_2^2+\cdots+Z_\nu^2
+$$
+
+sigue una distribución chi-cuadrado con $\nu$ grados de libertad.
+
+. . .
+
+Escribimos:
+
+$$
+X\sim \chi^2_\nu.
+$$
+
+
+### Relación con la varianza muestral
+
+La distribución chi-cuadrado es fundamental para hacer inferencia sobre varianzas.
+
+. . .
+
+Si $X_1,\ldots,X_n$ provienen de una población normal con varianza $\sigma^2$, entonces:
+
+$$
+\frac{(n-1)S^2}{\sigma^2}\sim \chi^2_{n-1}.
+$$
+
+. . .
+
+Esta relación permite construir intervalos de confianza y pruebas de hipótesis para $\sigma^2$.
+
+
+
+### Densidad chi-cuadrado
+
+Si $X\sim\chi^2_\nu$, su densidad es:
+
+$$
+f_X(x)=
+\frac{1}{2^{\nu/2}\Gamma(\nu/2)}
+x^{\nu/2-1}e^{-x/2},
+\qquad x>0.
+$$
+
+. . .
+
+Su media y varianza son:
+
+$$
+E(X)=\nu,
+\qquad
+Var(X)=2\nu.
+$$
+
+. . .
+
+La distribución solo toma valores positivos y suele ser asimétrica hacia la derecha.
+
+
+
+### Forma de la distribución
+
+Para pocos grados de libertad, la chi-cuadrado es muy asimétrica.
+
+. . .
+
+A medida que aumentan los grados de libertad, la distribución se desplaza hacia la derecha y se vuelve relativamente menos asimétrica.
+
+. . .
+
+Su soporte es:
+
+$$
+x>0.
+$$
+
+. . .
+
+Esto es coherente con su origen como suma de cuadrados.
+
+
+### Gráfico chi-cuadrado
+
+```{python}
+#| label: fig-chi-cuadrado
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5
+
+x_values = np.linspace(0.001, 30, 1000)
+
+fig, ax = plt.subplots(figsize=(8, 5))
+for df in [3, 10, 20]:
+    ax.plot(x_values, stats.chi2.pdf(x_values, df=df), linewidth=2, label=fr"$\chi^2_{{{df}}}$")
+
+ax.set_title("Distribuciones chi-cuadrado")
+ax.set_xlabel("x")
+ax.set_ylabel("Densidad")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+
+
+### Cálculo en Python
+
+```{python}
+#| label: chi2-python
+
+df = 10
+
+densidad_5 = stats.chi2.pdf(5, df=df)
+prob_hasta_15 = stats.chi2.cdf(15, df=df)
+critico_95 = stats.chi2.ppf(0.95, df=df)
+
+print(f"f(5), chi2_{df}:              {densidad_5:.4f}")
+print(f"P(X <= 15), chi2_{df}:        {prob_hasta_15:.4f}")
+print(f"Cuantil 95%, chi2_{df}:       {critico_95:.4f}")
+```
+
+## Distribución F
+
+### Motivación
+
+La **distribución F** aparece al comparar dos cantidades cuadráticas independientes, cada una estandarizada por sus grados de libertad.
+
+. . .
+
+Si:
+
+$$
+U\sim\chi^2_{\nu_1},
+\qquad
+V\sim\chi^2_{\nu_2},
+$$
+
+y $U$ y $V$ son independientes, entonces:
+
+$$
+F=\frac{U/\nu_1}{V/\nu_2}
+$$
+
+sigue una distribución F con $\nu_1$ y $\nu_2$ grados de libertad.
+
+. . .
+
+Escribimos:
+
+$$
+F\sim F_{\nu_1,\nu_2}.
+$$
+
+
+### Usos principales
+
+La distribución F aparece en tres contextos muy importantes.
+
+. . .
+
+Primero, en pruebas de igualdad de varianzas entre dos poblaciones normales.
+
+. . .
+
+Segundo, en análisis de varianza (ANOVA), donde se comparan variaciones entre grupos y dentro de grupos.
+
+. . .
+
+Tercero, en regresión, donde se evalúa la significancia conjunta de un conjunto de variables explicativas.
+
+
+### Densidad F
+
+Si $X\sim F_{\nu_1,\nu_2}$, su densidad es:
+
+$$
+f_X(x)=
+\frac{\Gamma\left(\frac{\nu_1+\nu_2}{2}\right)}
+{\Gamma\left(\frac{\nu_1}{2}\right)\Gamma\left(\frac{\nu_2}{2}\right)}
+\left(\frac{\nu_1}{\nu_2}\right)^{\nu_1/2}
+\frac{x^{\nu_1/2-1}}
+{\left(1+\frac{\nu_1}{\nu_2}x\right)^{(\nu_1+\nu_2)/2}},
+\qquad x>0.
+$$
+
+. . .
+
+La distribución F solo toma valores positivos.
+
+. . .
+
+Su forma depende de dos parámetros: los grados de libertad del numerador y del denominador.
+
+
+
+### Forma e interpretación
+
+La distribución F suele ser asimétrica hacia la derecha.
+
+. . .
+
+Valores cercanos a 1 indican que las dos fuentes de variabilidad comparadas son similares.
+
+. . .
+
+Valores grandes de $F$ indican que la variabilidad del numerador es grande respecto a la del denominador.
+
+. . .
+
+Por eso la distribución F se usa en pruebas donde la región crítica suele estar en la cola derecha.
+
+
+
+### Gráfico F
+
+```{python}
+#| label: fig-f
+#| echo: false
+#| fig-width: 8
+#| fig-height: 4.8
+
+x_values = np.linspace(0.001, 5, 1000)
+
+fig, ax = plt.subplots(figsize=(8, 4.8))
+ax.plot(x_values, stats.f.pdf(x_values, dfn=5, dfd=10), linewidth=2, label=r"$F_{5,10}$")
+ax.plot(x_values, stats.f.pdf(x_values, dfn=10, dfd=20), linewidth=2, label=r"$F_{10,20}$")
+ax.plot(x_values, stats.f.pdf(x_values, dfn=30, dfd=30), linewidth=2, label=r"$F_{30,30}$")
+ax.axvline(1, linestyle="--", linewidth=1)
+ax.set_title("Distribuciones F")
+ax.set_xlabel("x")
+ax.set_ylabel("Densidad")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+
+### Cálculo en Python
+
+```{python}
+#| label: f-python
+
+dfn = 5
+dfd = 10
+
+densidad_1 = stats.f.pdf(1, dfn=dfn, dfd=dfd)
+prob_hasta_2 = stats.f.cdf(2, dfn=dfn, dfd=dfd)
+critico_95 = stats.f.ppf(0.95, dfn=dfn, dfd=dfd)
+
+print(f"f(1), F_{dfn},{dfd}:              {densidad_1:.4f}")
+print(f"P(F <= 2), F_{dfn},{dfd}:         {prob_hasta_2:.4f}")
+print(f"Cuantil 95%, F_{dfn},{dfd}:       {critico_95:.4f}")
+```
+
+## Resumen
+
+### Comparación final
+
+Cada distribución especial aparece porque representa una estructura probabilística particular.
+
+. . .
+
+$$
+\begin{array}{c|c|c}
+\textbf{Distribución} & \textbf{Parámetros} & \textbf{Uso principal} \\
+\hline
+Bin(n,p) & n,p & \text{conteo de éxitos} \\
+N(\mu,\sigma^2) & \mu,\sigma & \text{variables continuas y aproximaciones} \\
+t_\nu & \nu & \text{inferencia sobre medias con } \sigma \text{ desconocida} \\
+\chi^2_\nu & \nu & \text{inferencia sobre varianzas} \\
+F_{\nu_1,\nu_2} & \nu_1,\nu_2 & \text{comparación de varianzas y modelos}
+\end{array}
+$$
+
+. . .
+
+Estas distribuciones conectan la teoría de probabilidad con los métodos de inferencia estadística.
+
+
+### Ejercicio de interpretación
+
+Para cada caso, identifique la distribución más adecuada:
+
+. . .
+
+1. Número de clientes que entran en default dentro de una muestra de 100 créditos, si cada uno tiene la misma probabilidad de default.
+
+. . .
+
+2. Estadístico para contrastar una media poblacional cuando $\sigma$ es desconocida.
+
+. . .
+
+3. Estadístico usado para construir un intervalo de confianza para una varianza poblacional.
+
+. . .
+
+4. Estadístico usado para comparar la variabilidad explicada y no explicada en una regresión.
+
+
+### Cierre
+
+La binomial modela conteos de éxitos en ensayos independientes.
+
+. . .
+
+La normal modela variables continuas simétricas y aproximaciones de estimadores.
+
+. . .
+
+La t-Student ajusta la incertidumbre adicional de estimar la desviación estándar poblacional.
+
+. . .
+
+La chi-cuadrado y la F son distribuciones fundamentales para inferencia sobre varianzas, ANOVA y regresión.
+
+# Simulación y conexión con inferencia
+
+## Distribuciones como modelos
+
+Una distribución de probabilidad es un modelo. Como todo modelo, simplifica. Su utilidad depende de si la simplificación conserva los aspectos relevantes para el problema.
+
+. . .
+
+En una aplicación económica, la pregunta no es “¿los datos son exactamente normales?”, sino “¿la aproximación normal es suficientemente razonable para este objetivo?”.
+
+. . .
+
+::: {.callout-warning title="Principio práctico"}
+Antes de imponer una distribución, observe los datos. Un histograma, una transformación logarítmica o un gráfico de cuantiles puede revelar si el supuesto es razonable.
+:::
+
+## Simulación y pensamiento probabilístico
+
+La simulación nos ayuda a entender la diferencia entre una distribución teórica y una muestra observada.
+
+. . .
+
+Si generamos datos desde una distribución conocida, veremos que cada muestra tiene una forma ligeramente distinta. Esa variabilidad no es un error: es variabilidad muestral.
+
+. . .
+
+Formalmente, una muestra aleatoria suele representarse como:
+
+$$
+X_1,\ldots,X_n \overset{iid}{\sim} F.
+$$
+
+Esto significa que las observaciones tienen la misma distribución $F$ y son independientes entre sí.
+
+## Simulación normal
+
+```{python}
+#| label: fig-simulacion-normal
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+
+rng = np.random.default_rng(123)
+muestra = rng.normal(loc=0, scale=1, size=500)
+
+x = np.linspace(-4, 4, 500)
+dens = stats.norm.pdf(x)
+
+fig, ax = plt.subplots(figsize=(9, 5))
+ax.hist(muestra, bins=30, density=True, edgecolor="black", linewidth=0.4, alpha=0.6)
+ax.plot(x, dens, linewidth=2, label="Densidad teórica N(0,1)")
+ax.set_title("Muestra simulada desde una normal estándar")
+ax.set_xlabel("x")
+ax.set_ylabel("Densidad")
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+
+## De variables aleatorias a inferencia
+
+La razón por la que estudiamos variables aleatorias antes de intervalos de confianza o pruebas de hipótesis es que los estimadores también son variables aleatorias.
+
+. . .
+
+Antes de observar una muestra, la media muestral es incierta:
+
+$$
+\bar{X}=\frac{1}{n}\sum_{i=1}^{n}X_i.
+$$
+
+. . .
+
+Después de observar la muestra, obtenemos un valor concreto $\bar{x}$. La inferencia consiste en usar la distribución de $\bar{X}$ para cuantificar la incertidumbre alrededor de $\bar{x}$.
+
+# Ejercicios
+
+## Ejercicio 1: Bernoulli
+
+Considere la variable:
+
+$$
+X =
+\begin{cases}
+1, & \text{si un país tiene inflación mayor a 10\%},\\
+0, & \text{en otro caso}.
+\end{cases}
+$$
+
+Explique por qué $X$ es una variable aleatoria Bernoulli. Luego interprete $E(X)$ en lenguaje económico y proponga cómo estimaría $p$ usando una muestra de países.
+
+## Ejercicio 2: Poisson
+
+Suponga que el número mensual de defaults bancarios sigue:
+
+$$
+X\sim Pois(2).
+$$
+
+Calcule la probabilidad de observar cero defaults en un mes y la probabilidad de observar tres o menos defaults. Luego explique qué significa el supuesto $E(X)=Var(X)=2$ y cuándo podría ser poco realista.
+
+```{python}
+#| label: ejercicio-poisson
+
+lam = 2
+
+print(f"P(X=0):  {stats.poisson.pmf(0, mu=lam):.4f}")
+print(f"P(X<=3): {stats.poisson.cdf(3, mu=lam):.4f}")
+print(f"E(X):    {lam}")
+print(f"Var(X):  {lam}")
+```
+
+## Ejercicio 3: normalidad aproximada
+
+Use el PIB per cápita de 2023. Primero grafique su distribución en niveles y luego en logaritmos. Compare ambas formas y discuta cuál parece más compatible con una aproximación normal.
+
+. . .
+
+La respuesta debe distinguir entre una conclusión descriptiva y una conclusión probabilística: observar que el histograma “se parece” a una normal no prueba normalidad, pero puede justificar una aproximación inicial.
+
+# Conclusión
+
+## Resumen conceptual
+
+La idea fundamental de esta clase es que una variable aleatoria conecta un resultado incierto con un número. Su distribución describe cómo se asigna probabilidad a los valores posibles de ese número.
+
+. . .
+
+La media y la varianza son resúmenes importantes, pero no reemplazan a la distribución completa. Dos variables pueden tener la misma media y varianza, pero riesgos muy distintos si sus colas o asimetrías son diferentes.
+
+. . .
+
+::: {.callout-tip title="Próxima clase"}
+Usaremos estas ideas para estudiar distribuciones muestrales, intervalos de confianza y pruebas de hipótesis.
+:::

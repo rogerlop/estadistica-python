@@ -1,0 +1,1609 @@
+---
+title: "Introducción a Python"
+subtitle: "Curso de Estadística Aplicada en Python"
+author: "Roger M. López Justiniano"
+#date: today
+lang: es
+fontsize: 12pt
+institute: CENACE - Universidad Privada de Santa Cruz
+format:
+  revealjs:
+    theme: serif
+    fig-align: center
+    self-contained: true
+    css: "../../assets/custom_v2.css"
+    logo: "../../assets/logoCENACE.svg"
+    toc: true
+    code-fold: show
+    code-summary: "Ver código"
+    toc-title: "Contenido"
+    toc-location: left
+    toc-depth: 1
+    slide-number: true
+    slide-level: 3
+    link-external-newwindow: true
+    preview-links: true
+    auto-stretch: false
+    transition: fade
+    math: mathjax
+    html-math-method: mathjax
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+
+  
+---
+
+# `Python` como calculadora
+
+En esta sección se sientan las bases para *entender* el lenguaje, al menos en la forma en que `Python` ejecuta las órdenes para realizar cálculos matemáticos.
+
+## Operaciones básicas I
+
+En primer lugar, `Python` puede funcionar como una calculadora básica, realizando las operaciones más comunes como:
+
+. . .
+
+::::{.columns}
+:::: {.column width="48%"}
+**Sumar**
+
+```{python}
+1 + 1
+```
+
+::::
+
+::::{.column width="4%"}
+::::
+
+:::: {.column width="48%"}
+**Restar**
+
+```{python}
+1 - 1
+```
+
+::::
+::::
+
+. . .
+
+::::{.columns}
+:::: {.column width="48%"}
+**Multiplicar**
+
+```{python}
+3 * 2
+```
+
+::::
+
+:::: {.column width="4%"}
+::::
+
+:::: {.column width="48%"}
+**Dividir**
+
+```{python}
+21 / 3
+```
+
+::::
+::::
+
+## Operaciones básicas II
+
+El lenguaje también permite realizar operaciones más complejas como:
+
+**Potenciación**
+
+```{python}
+2 ** 3
+```
+
+. . .
+
+**Raíz cuadrada**
+
+```{python}
+import math
+math.sqrt(4)
+```
+
+<br>
+
+:::: {style="font-size: 90%;"}
+::: {.callout-note title="Nota"}
+En Python, la potenciación se escribe con `**`, no con `^`.  
+Además, la raíz cuadrada no es un operador nativo: se utiliza la función `sqrt()` del módulo `math`.
+:::
+::::
+
+## Operaciones básicas III
+
+Finalmente, las reglas básicas de aritmética se aplican en `Python`:
+
+. . .
+
+No es lo mismo dividir y sumar:
+
+```{python}
+15/3 + 2
+```
+
+. . .
+
+Que sumar y dividir:
+
+```{python}
+15/(3 + 2)
+```
+
+# Asignación de variables
+
+La idea de objeto se repetirá bastante y es, en parte, definitoria en el lenguaje que estamos utilizando. Si bien el concepto es más profundo y complejo, por el momento, podemos decir que *un objeto es una entidad en la cual se coloca información a la cual se puede acceder y reutilizar luego.*
+
+## Mi primera variable
+
+Supongamos que queremos guardar el resultado de la operación `1 + 1` en una variable llamada `x`. (¿Por qué querríamos hacerlo?)
+
+. . .
+
+```{python}
+x = 1 + 1
+```
+
+. . .
+
+A diferencia de los ejemplos anteriores, no necesariamente se imprime automáticamente el resultado. Sin embargo, si escribimos `x` y ejecutamos la celda:
+
+```{python}
+x
+```
+
+. . .
+
+Esto ocurre porque `Python` ha almacenado correctamente el resultado de la operación en la variable `x`.
+
+## Mi segunda variable
+
+No es necesario que el nombre de la variable sea `x`, podemos utilizar cualquier otro nombre. Por ejemplo, si quisiéramos guardar el resultado de la operación `1 + 3` en una variable llamada `suma`, podríamos hacerlo:
+
+```{python}
+suma = 1 + 3
+suma
+```
+
+. . .
+
+Ya tendríamos dos variables, `x` y `suma`, que contienen valores distintos y que pueden ser reutilizados posteriormente.
+
+<br>
+
+:::: {style="font-size: 90%;"}
+::: {.callout-warning title="Advertencia"}
+Se recomienda utilizar nombres cortos y descriptivos, evitando espacios y puntos.  
+Por ejemplo, el objeto `mi_objeto` es más recomendable que `mi.objeto` o `mi objeto`.
+:::
+::::
+
+## Antes de seguir: asignar
+
+Para asignar variables, `Python` utiliza el símbolo `=`.
+
+```{python}
+mi_variable = 4 * 2
+mi_variable
+```
+
+. . .
+
+En Python, `=` se utiliza para asignar, mientras que `==` se utiliza para comparar igualdad.
+
+## Antes de seguir: mayúsculas y minúsculas
+
+Otra cosa a tener en cuenta es que `Python` es **sensible a mayúsculas y minúsculas**. Por lo tanto, `mi_variable` y `Mi_variable` son dos objetos diferentes. Por ejemplo:
+
+```{python}
+mi_variable = 4 * 2
+```
+
+. . .
+
+Pero nos referimos a ella como `Mi_variable`, `Python` no la reconocerá:
+
+```{python}
+#| error: true
+# Esto generará un error
+Mi_variable
+```
+
+. . .
+
+El lenguaje nos devolverá un error si intentamos acceder a un objeto que no existe.
+
+. . .
+
+Ahora, si escribimos el nombre correcto, `mi_variable`, obtendremos el resultado esperado:
+
+```{python}
+mi_variable
+```
+
+## Utilizando variables
+
+Las variables que hemos creado (`x` y `suma`) pueden ser utilizadas para cálculos posteriores. Recordando sus valores:
+
+```{python}
+x
+suma
+```
+
+. . .
+
+Podemos realizar operaciones con ellas:
+
+```{python}
+x * suma
+```
+
+Esta es la idea detrás de las variables: guardar información para poder reutilizarla posteriormente.
+
+------------------------------------------------------------------------
+
+Adicionalmente, es posible *modificar* el valor de una variable. Por ejemplo, si quisiéramos cambiar el valor de `x` a `10`, podríamos hacerlo. Actualmente `x` es:
+
+```{python}
+x
+```
+
+. . .
+
+Podemos cambiar su valor a `10`:
+
+```{python}
+x = 10
+x
+```
+
+. . .
+
+::: {.callout-note title="Nota"}
+Las variables existen mientras el programa está en ejecución. Si se desea eliminar una variable, se puede utilizar la función `del`, por ejemplo: `del x`.
+:::
+
+## Tipos de datos
+
+Hasta ahora hemos trabajado con números enteros. Sin embargo, `Python` permite trabajar con diferentes tipos de datos. A continuación se presentan los tipos de datos más comunes:
+
+::: {.incremental style="font-size: 100%;"}
+-   **Números enteros**: `1`, `2`, `3`, etc.
+-   **Números decimales**: `1.5`, `2.3`, `3.14`, etc.
+-   **Texto**: `"Hola"`, `"Mundo"`, `"Hola mundo"`, etc.
+-   **Lógicos**: `True`, `False`.
+-   **None**: valor especial que representa ausencia de valor.
+:::
+
+. . .
+
+<br>
+
+Conforme se avance en el curso, se irán introduciendo estos tipos en el análisis.
+
+## Palabras reservadas
+
+Existe un conjunto de **palabras reservadas** que **no deben** ser utilizadas como nombres de objetos, pues son utilizadas internamente por el lenguaje:
+
+<br>
+
+::: {style="font-size: 80%;"}
+|            |               |           |          |
+|:----------:|:-------------:|:---------:|:--------:|
+|   `if`     |   `else`      |  `while`  |  `for`   |
+|  `break`   |  `continue`   |  `def`    | `return` |
+|  `True`    |   `False`     |  `None`   |  `in`    |
+:::
+
+# Listas
+
+Una de las estructuras básicas en `Python` son las **listas**. Una lista es una colección ordenada de elementos. En otros lenguajes de programación, las listas se conocen como *arrays* o *vectores*.
+
+## Mi primera lista
+
+Para entender las listas, imaginemos que tenemos la siguiente tabla de datos:
+
+:::::::: columns
+::::: {.column width="40%"}
+::: {style="font-size: 80%;"}
+| Id  | Vendedor | Ventas (Bs) |
+|:---:|:--------:|:-----------:|
+|  1  |   Juan   |     500     |
+|  2  |  María   |     700     |
+|  3  |  Miguel  |     400     |
+|  4  |  Pedro   |     200     |
+|  5  |   Ana    |    1000     |
+:::
+:::::
+
+:::: {.column width="60%"}
+::: {.fragment}
+Para representar las ventas, podemos utilizar una lista:
+:::
+
+::: {.fragment}
+
+```{python}
+
+ventas = [500, 700, 400, 200, 1000]
+
+ventas
+
+```
+
+:::
+
+::: {.fragment}
+Verificamos que `ventas` es una lista:
+:::
+
+::: {.fragment}
+
+```{python}
+
+type(ventas)
+
+```
+
+:::
+
+::::
+::::::::
+
+. . .
+
+Por ejemplo, si queremos expresar las ventas en cientos:
+
+```{python}
+ventas_cientos = [v / 100 for v in ventas]
+ventas_cientos
+```
+
+. . .
+
+Podemos ver que Python ha aplicado la operación a cada elemento.
+
+## Operaciones con listas
+
+Podemos definir dos listas:
+
+```{python}
+ventas_semana1 = [500, 700, 400, 200, 1000]
+ventas_semana2 = [700, 800, 600, 300, 1200]
+```
+
+. . .
+
+Y sumar elemento a elemento:
+
+```{python}
+ventas_totales = [a + b for a, b in zip(ventas_semana1, ventas_semana2)]
+ventas_totales
+```
+
+## Extracción de elementos
+
+Para extraer elementos se utilizan índices (Python comienza en 0):
+
+```{python}
+ventas[0]
+```
+
+. . .
+
+Varios elementos:
+
+```{python}
+[ventas[i] for i in [0, 2]]
+```
+
+. . .
+
+Rangos:
+
+```{python}
+ventas[1:4]
+```
+
+## Un problema de las listas
+
+El problema de las listas es que son estructuras genéricas para almacenar datos, pero no están diseñadas para análisis estadísticos. 
+
+. . . 
+
+Por ejemplo, una lista puede contener distintos tipos de datos:
+
+```{python}
+mi_lista = [1, 2, "tres", 4.0, True]
+mi_lista
+```
+
+. . .
+
+Entonces, si queremos realizar algún cálculo estadístico, debemos asegurarnos de que todos los elementos sean del mismo tipo. Esto puede ser un problema si no se tiene cuidado al construir la lista.
+
+. . .
+
+Más adelante, veremos estructuras de datos más especializadas que nos permitirán trabajar con datos de manera más eficiente y segura, aunque la lógica de las listas sigue siendo la base para entender cómo funcionan estas estructuras.
+
+# Funciones
+
+En **matemáticas**, una función es una *relación* que asigna a cada elemento de un conjunto (input) un único valor en otro conjunto (output). En **programación**, una función es un *bloque de código* que recibe argumentos, realiza operaciones y devuelve un resultado.
+
+## Motivación: por qué necesitamos funciones
+
+Hasta ahora hemos realizado cálculos directamente sobre números o estructuras de datos.
+
+. . .
+
+Sin embargo, en cuanto los problemas se vuelven más complejos, surge una necesidad fundamental:
+
+- Reutilizar cálculos  
+- Evitar repetir código  
+- Abstraer operaciones  
+
+. . .
+
+Por ejemplo, calcular una raíz cuadrada, una suma o un promedio son operaciones que queremos poder aplicar **de forma sistemática y general**.
+
+. . .
+
+Aquí es donde entran las **funciones**.
+
+## Intuición: funciones como relaciones
+
+En términos matemáticos, una función es una relación que asigna a cada elemento de un conjunto un único valor en otro conjunto.
+
+. . .
+
+Formalmente:
+
+$$
+f: X \to Y
+$$
+
+tal que:
+
+$$
+y = f(x)
+$$
+
+. . .
+
+En programación, esta idea se traduce en:
+
+- **Input (argumento)** → información de entrada  
+- **Output (resultado)** → información de salida  
+
+. . .
+
+La función implementa una regla que transforma el input en output.
+
+## Funciones en Python: estructura básica
+
+En Python, una función puede verse como un bloque de código que:
+
+- recibe argumentos  
+- realiza operaciones  
+- devuelve un resultado  
+
+. . .
+
+Por ejemplo, la función `sum()` toma una lista de números y devuelve su suma:
+
+```{python}
+len([1, 5, 7])
+```
+
+. . .
+
+Aquí:
+
+- Input: `[1, 5, 7]`  
+- Regla o función: calcular la longitud  
+- Output: `3`  
+
+## Funciones como operadores sobre estructuras
+
+Una idea clave es que las funciones no solo operan sobre números individuales, sino también sobre estructuras completas.
+
+. . .
+
+Por ejemplo, consideremos una lista de ventas:
+
+```{python}
+ventas = [500, 700, 400, 200, 1000]
+```
+
+. . .
+
+Podemos aplicar la función `sum()`:
+
+```{python}
+sum(ventas)
+```
+
+. . .
+
+Aquí la función toma como input una colección de datos y devuelve un único valor.
+
+## Funciones de agregación
+
+La función `sum()` es un ejemplo de **función de agregación**.
+
+. . .
+
+Formalmente:
+
+$$
+\sum_{i=1}^{n} x_i
+$$
+
+. . .
+
+Esto implica que estamos pasando de:
+
+- muchos valores (nivel micro)  
+- a un único resumen (nivel agregado)  
+
+## Construcción del promedio: descomposición
+
+Podemos construir el promedio a partir de funciones básicas:
+
+```{python}
+sum(ventas) / len(ventas)
+```
+
+. . .
+
+Esto corresponde a la definición:
+
+$$
+\bar{x}
+=
+\frac{1}{n} \sum_{i=1}^{n} x_i
+$$
+
+
+
+## Funciones y ordenamiento
+
+Otra clase importante de funciones transforma la estructura de los datos.
+
+. . .
+
+```{python}
+sorted(ventas)
+```
+
+. . .
+
+Orden descendente:
+
+```{python}
+sorted(ventas, reverse=True)
+```
+
+. . .
+
+Las funciones pueden tener **argumentos adicionales** que modifican su comportamiento.
+
+
+# Funciones propias
+
+## Motivación: por qué crear nuestras propias funciones
+
+Hasta ahora hemos utilizado funciones ya existentes.
+
+. . .
+
+Sin embargo, en la práctica necesitaremos:
+
+- Definir cálculos personalizados  
+- Reutilizar lógica en distintos contextos  
+- Encapsular operaciones complejas  
+
+. . .
+
+Esto se logra creando **funciones propias**.
+
+## Sintaxis básica
+
+En Python, las funciones se definen con la palabra clave `def`:
+
+```{python}
+def nombre_funcion(argumento):
+    resultado = argumento * 2
+    return resultado
+```
+
+. . .
+
+Estructura:
+
+- `def` → define la función  
+- nombre → identificador  
+- argumento → input  
+- `return` → output  
+
+## Ejemplo: función simple
+
+Supongamos que queremos duplicar un número:
+
+```{python}
+def duplicar(x):
+    return 2 * x
+
+duplicar(5)
+```
+
+. . .
+
+Aquí:
+
+- Input: `5`  
+- Output: `10`  
+
+## Ejemplo: función de promedio
+
+Podemos encapsular el cálculo del promedio:
+
+```{python}
+def promedio(x):
+    return sum(x) / len(x)
+
+promedio(ventas)
+```
+
+. . .
+
+Esto hace explícita la lógica del cálculo y permite reutilizarla.
+
+## Funciones con múltiples argumentos
+
+Las funciones pueden recibir más de un input.
+
+. . .
+
+```{python}
+def suma(a, b):
+    return a + b
+
+suma(3, 4)
+```
+
+. . .
+
+Esto refleja directamente la estructura matemática:
+
+$$
+f(a, b) = a + b
+$$
+
+## Funciones y generalización
+
+Una función bien definida permite aplicar la misma lógica a distintos datos:
+
+```{python}
+promedio([10, 20, 30])
+promedio([100, 200, 300])
+```
+
+. . .
+
+Esto evita duplicar código y reduce errores.
+
+## Funciones como abstracción
+
+Una función permite:
+
+- Ocultar detalles de implementación  
+- Trabajar a un nivel conceptual más alto  
+- Pensar en términos de transformaciones  
+
+. . .
+
+Por ejemplo, en lugar de escribir:
+
+```{python}
+sum(ventas) / len(ventas)
+```
+
+. . .
+
+Podemos escribir:
+
+```{python}
+promedio(ventas)
+```
+
+. . .
+
+Esto mejora la legibilidad y claridad del código.
+
+## Advertencia: errores comunes
+
+::: {.callout-warning title="Advertencia"}
+Al definir funciones, es importante:
+
+- Usar `return` (sin él, la función devuelve `None`)  
+- Evitar modificar variables globales sin necesidad  
+- Nombrar funciones de forma clara y descriptiva  
+:::
+
+. . .
+
+Las funciones son uno de los pilares del pensamiento en programación y serán utilizadas constantemente en el curso.
+
+# Módulos, paquetes y librerías
+
+Antes de avanzar hacia herramientas de análisis de datos, conviene hacer una pausa conceptual. Hasta ahora se ha usado `Python` como calculadora, se han creado objetos, listas y funciones. Sin embargo, el trabajo práctico en `Python` no se limita a las herramientas básicas del lenguaje: también se apoya en componentes adicionales que amplían sus capacidades.
+
+## Motivación: por qué necesitamos herramientas adicionales
+
+`Python` incluye muchas funciones básicas, pero no todas las herramientas posibles vienen cargadas desde el inicio.
+
+. . .
+
+Por ejemplo, `Python` puede sumar números, crear listas, definir funciones y trabajar con texto, pero distintas áreas de trabajo requieren herramientas más especializadas.
+
+. . .
+
+El análisis de datos, la visualización, la automatización de tareas, el trabajo con archivos, la modelación estadística o el aprendizaje automático necesitan funcionalidades distintas.
+
+. . .
+
+En lugar de incluir todo en el lenguaje base, `Python` permite incorporar herramientas según el problema que se quiere resolver.
+
+. . .
+
+Esta lógica hace que `Python` sea flexible: se parte de un lenguaje general y se lo extiende con componentes especializados cuando hace falta.
+
+## La idea general: extender Python
+
+Una forma útil de pensar en `Python` es distinguir entre:
+
+. . .
+
+- El **lenguaje base**, que provee la sintaxis y objetos fundamentales.
+
+. . .
+
+- La **biblioteca estándar**, que incluye módulos ya instalados con Python.
+
+. . .
+
+- Los **paquetes externos**, que se instalan adicionalmente cuando se necesita ampliar el lenguaje.
+
+. . .
+
+Por ejemplo, `math`, `random` y `datetime` pertenecen a la biblioteca estándar.
+
+. . .
+
+En cambio, herramientas como `pandas`, `numpy`, `matplotlib` o `scipy` normalmente se instalan como paquetes externos.
+
+## ¿Qué es un módulo?
+
+Un **módulo** es, en términos simples, un archivo de Python que contiene código reutilizable.
+
+. . .
+
+Ese código puede incluir funciones, objetos, clases, constantes o instrucciones que luego pueden cargarse en otro programa.
+
+. . .
+
+Por ejemplo, el módulo `math` contiene funciones matemáticas como `sqrt()`, `log()` o `sin()`.
+
+. . .
+
+Para usar un módulo, primero se lo importa con `import`.
+
+. . .
+
+```{python}
+import math
+
+math.sqrt(25)
+```
+
+. . .
+
+La notación `math.sqrt()` significa: usar la función `sqrt()` que se encuentra dentro del módulo `math`.
+
+## Módulos de la biblioteca estándar
+
+La **biblioteca estándar** es el conjunto de módulos que viene incluido con Python.
+
+. . .
+
+Estos módulos no requieren instalación adicional, porque forman parte de una instalación normal de Python.
+
+. . .
+
+Por ejemplo, `math`, `random` y `datetime` son módulos muy usados.
+
+. . .
+
+```{python}
+import random
+import datetime as dt
+
+numero = random.randint(1, 10)
+hoy = dt.date.today()
+
+numero, hoy
+```
+
+. . .
+
+Este ejemplo muestra una idea importante: importar módulos permite acceder a herramientas que no están disponibles directamente en el espacio de trabajo inicial.
+
+. . .
+
+`dt.date.today()` utiliza el alias `dt`, que fue asignado al módulo datetime mediante `import datetime as dt`. Dentro de ese módulo existe la clase `date`, y `today()` es un método de esa clase que devuelve la fecha actual.
+
+## ¿Qué módulos vienen con Python?
+
+Python permite listar los módulos disponibles en la **biblioteca estándar**.
+
+. . .
+
+Esto es útil para distinguir entre herramientas que ya vienen con Python y herramientas externas que deben instalarse por separado.
+
+. . .
+
+:::{.columns}
+
+::: {.column width="60%"}
+Desde Python 3.10, se puede usar `sys.stdlib_module_names`:
+
+```{python}
+import sys
+
+modulos_estandar = sorted(sys.stdlib_module_names)
+modulos_estandar[:40]
+```
+
+:::
+
+:::{.column width="5%"}
+:::
+
+::: {.column width="35%"}
+:::{.incremental}
+
+- El resultado anterior muestra solo los primeros 40 módulos, porque la lista completa es bastante larga.
+
+- La idea no es memorizar esos nombres, sino reconocer que Python ya incluye un conjunto amplio de herramientas listas para usar.
+
+:::
+:::
+:::
+
+## Verificar si un módulo viene incluido
+
+También se puede preguntar si un módulo específico pertenece a la biblioteca estándar.
+
+. . .
+
+Por ejemplo, `math` sí viene incluido con Python:
+
+```{python}
+"math" in sys.stdlib_module_names
+```
+
+. . .
+
+En cambio, `pandas` no pertenece a la biblioteca estándar:
+
+```{python}
+"pandas" in sys.stdlib_module_names
+```
+
+. . .
+
+La comparación muestra una distinción central: algunos módulos se importan directamente porque ya vienen con Python; otros paquetes deben instalarse antes de poder importarse.
+
+. . .
+
+Esta diferencia será importante cada vez que se incorporen herramientas externas al flujo de trabajo.
+
+## ¿Qué es un paquete?
+
+Un **paquete** es una forma de organizar varios módulos bajo una misma estructura.
+
+. . .
+
+Mientras un módulo puede pensarse como un archivo, un paquete puede pensarse como una carpeta organizada que contiene varios módulos relacionados.
+
+. . .
+
+Por ejemplo, un paquete puede contener módulos para leer datos, transformar objetos, crear gráficos o ejecutar cálculos especializados.
+
+. . .
+
+En la práctica, muchas veces se usa la palabra **librería** para referirse de forma general a estos conjuntos de herramientas.
+
+. . .
+
+Por eso, en el uso cotidiano, expresiones como "librería", "paquete" o "herramienta" suelen aparecer de manera cercana, aunque técnicamente no sean exactamente lo mismo.
+
+## Librería, paquete y módulo: comparación práctica
+
+::: {style="font-size: 85%;"}
+| Concepto | Idea principal | Ejemplo |
+|---|---|---|
+| Módulo | Archivo importable con código reutilizable | `math` |
+| Paquete | Conjunto organizado de módulos | `pandas` |
+| Librería | Término general para una colección de herramientas | `numpy`, `matplotlib`, `pandas` |
+| Biblioteca estándar | Herramientas incluidas con Python | `math`, `random`, `datetime` |
+:::
+
+. . .
+
+La distinción técnica es útil, pero lo más importante para el curso es comprender la lógica de trabajo.
+
+. . .
+
+Primero se identifica si una herramienta ya viene con Python o si debe instalarse.
+
+. . .
+
+Luego se importa dentro del código.
+
+. . .
+
+Finalmente se usa mediante sus funciones, objetos o métodos.
+
+## Instalación: por qué no basta escribir `import`
+
+Cuando se escribe una instrucción como `import nombre_paquete`, Python busca si esa herramienta está disponible en el entorno activo.
+
+. . .
+
+Si el paquete ya está instalado, se carga correctamente.
+
+. . .
+
+Si no está instalado, aparecerá un error como:
+
+```{python}
+#| eval: false
+
+ModuleNotFoundError: No module named 'nombre_paquete'
+```
+
+. . .
+
+Este error no significa necesariamente que la idea del código esté mal.
+
+. . .
+
+Normalmente significa que el paquete no está instalado en el entorno de Python que se está usando.
+
+## `pip`: instalación desde PyPI
+
+`pip` es el instalador tradicional de paquetes de Python.
+
+. . .
+
+Se utiliza para instalar paquetes desde PyPI, el repositorio público más usado por la comunidad Python.
+
+. . .
+
+Por ejemplo, para instalar un paquete externo, se puede ejecutar en la terminal:
+
+```{bash}
+python -m pip install nombre_paquete
+```
+
+. . .
+
+Para instalar `pandas`, la instrucción sería:
+
+```{bash}
+python -m pip install pandas
+```
+
+. . .
+
+La forma `python -m pip` es recomendable porque ayuda a instalar el paquete usando el mismo Python que se está ejecutando.
+
+## `conda`: instalación en entornos científicos
+
+`conda` es un gestor de paquetes y entornos muy usado en ciencia de datos.
+
+. . .
+
+A diferencia de `pip`, `conda` no solo instala paquetes de Python: también puede gestionar dependencias externas y entornos completos.
+
+. . .
+
+Si se trabaja con Anaconda, Miniconda o Miniforge, se puede instalar un paquete con:
+
+```{bash}
+conda install -c conda-forge nombre_paquete
+```
+
+. . .
+
+Por ejemplo, para instalar `pandas`:
+
+```{bash}
+conda install -c conda-forge pandas
+```
+
+. . .
+
+El canal `conda-forge` es una fuente comunitaria muy utilizada para paquetes científicos.
+
+## `pip` vs `conda`: criterio práctico
+
+No siempre es necesario memorizar todos los detalles técnicos, pero sí conviene tener una regla de trabajo clara.
+
+. . .
+
+Si se instaló Python mediante Anaconda, Miniconda o Miniforge, suele ser preferible comenzar usando `conda`.
+
+. . .
+
+Si se instaló Python directamente desde `python.org`, suele ser natural usar `pip`.
+
+. . .
+
+Lo importante es evitar instalar paquetes en un entorno y ejecutar el código desde otro.
+
+. . .
+
+En VS Code, esto implica verificar que el intérprete seleccionado sea el mismo entorno donde se instaló el paquete.
+
+## Verificar una instalación
+
+Después de instalar un paquete, se debe verificar que Python puede importarlo correctamente.
+
+. . .
+
+La verificación mínima consiste en importar el paquete y consultar, si existe, su versión.
+
+. . .
+
+Por ejemplo, con `pandas`:
+
+```{python}
+import pandas as pd
+
+pd.__version__
+```
+
+. . .
+
+Si aparece un número de versión, significa que el paquete está instalado y disponible en el entorno activo.
+
+. . .
+
+También se puede verificar desde dónde se está ejecutando Python:
+
+```{python}
+import sys
+
+sys.executable
+```
+
+. . .
+
+Esta línea ayuda a diagnosticar problemas cuando existen varias instalaciones de Python en la misma computadora.
+
+## Verificar dónde está instalado un paquete
+
+Además de verificar la versión, también se puede preguntar a Python dónde está ubicado un paquete.
+
+. . .
+
+Esto es útil cuando se sospecha que VS Code está usando otro entorno.
+
+. . .
+
+```{python}
+import pandas as pd
+
+pd.__file__
+```
+
+. . .
+
+Si el resultado apunta a una carpeta del entorno esperado, la instalación está correctamente conectada con la sesión actual.
+
+. . .
+
+Si apunta a otra ubicación, puede haber una inconsistencia entre instalación y ejecución.
+
+. . .
+
+Esta verificación evita perder tiempo reinstalando paquetes cuando el problema real es la selección del intérprete.
+
+## Importar paquetes: alias y convenciones
+
+Muchos paquetes se importan usando un alias corto.
+
+. . .
+
+Un alias no cambia el paquete: solo define un nombre abreviado para usarlo dentro del código.
+
+. . .
+
+Por ejemplo, estas convenciones son muy comunes:
+
+```{python}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+```
+
+. . .
+
+Estas abreviaciones no son obligatorias, pero facilitan la lectura del código y siguen el estilo usado en documentación, libros y proyectos profesionales.
+
+. . .
+
+Una vez definido el alias, las funciones y objetos del paquete se llaman usando ese prefijo.
+
+## Documentación oficial
+
+Cuando se trabaja con paquetes externos, la documentación oficial es la fuente principal para consultar instalación, ejemplos y detalles de uso.
+
+. . .
+
+Por ejemplo, la guía de usuario de `pandas` está disponible en:
+
+<https://pandas.pydata.org/docs/user_guide/index.html#user-guide>
+
+. . .
+
+La página oficial de instalación de `pandas` está disponible en:
+
+<https://pandas.pydata.org/docs/getting_started/install.html>
+
+. . .
+
+La documentación no debe entenderse como algo que se memoriza completa.
+
+. . .
+
+Más bien, se consulta de forma progresiva: primero para aprender patrones básicos y luego para resolver dudas específicas.
+
+## Ejemplo general: cargar una herramienta externa
+
+El patrón general de trabajo con un paquete externo es siempre parecido:
+
+:::{.incremental}
+1. Primero se instala si no está disponible.
+2. Luego se importa en la sesión de trabajo.
+3. Después se utiliza alguno de sus objetos, funciones o métodos.
+:::
+
+. . .
+
+Por ejemplo, con `pandas` se puede crear un objeto sencillo de datos etiquetados:
+
+```{python}
+import pandas as pd
+
+datos = pd.Series(
+    data=[10, 20, 30],
+    index=["A", "B", "C"]
+)
+
+datos
+```
+
+. . .
+
+Por ahora, lo importante no es estudiar todavía este objeto en detalle, sino observar el patrón: instalar, importar y usar.
+
+## Librerías para el análisis de datos
+
+La razón para incorporar paquetes externos no es simplemente escribir menos código.
+
+. . .
+
+La razón principal es acceder a estructuras y funciones especializadas para problemas concretos.
+
+. . .
+
+En análisis de datos, esto significa trabajar con objetos que conservan estructura: etiquetas, nombres, columnas, índices, tipos de datos y métodos de resumen.
+
+. . .
+
+A continuación se estudiará una primera estructura de `pandas`, que permitirá pasar de listas simples a objetos más adecuados para representar datos observados.
+
+
+# Series
+
+Hasta ahora hemos trabajado con listas de Python para representar colecciones de datos. Sin embargo, cuando el objetivo es hacer **análisis de datos**, las listas resultan limitadas.
+
+Aquí es donde entra en juego `pandas`, una librería diseñada específicamente para trabajar con datos estructurados.
+
+## Motivación: ¿por qué no usar listas?
+
+Una lista como:
+
+```{python}
+ventas = [500, 700, 400, 200, 1000]
+ventas
+```
+
+. . .
+
+Es útil para almacenar datos, pero tiene varias limitaciones:
+
+:::{.incremental}
+- No tiene etiquetas asociadas (no sabemos qué observación corresponde a qué individuo)  
+- No tiene métodos estadísticos integrados (media, desviación estándar, etc.)  
+- Las operaciones elemento a elemento requieren estructuras adicionales (como list comprehensions)  
+- No está diseñada para análisis de datos tabulares  
+
+:::
+. . .
+
+Esto limita su uso cuando trabajamos con datos reales.
+
+## Introducción a `pd.Series`
+
+Una **Series** en `pandas` es una estructura de datos unidimensional que:
+
+:::{.incremental}
+- Contiene valores (como una lista)  
+- Tiene un **índice asociado** (etiquetas)  
+- Permite operaciones vectorizadas y estadísticas  
+
+:::
+
+. . .
+
+Formalmente, podemos pensar una `Series` como una función:
+
+$$
+i \mapsto x_i
+$$
+
+donde cada índice $i$ está asociado a un valor $x_i$.
+
+## Creando una Series
+
+Podemos crear una `Series` a partir de una lista:
+
+```{python}
+import pandas as pd
+
+ventas = pd.Series([500, 700, 400, 200, 1000])
+ventas
+```
+
+. . .
+
+Observamos dos elementos:
+
+- Los valores  
+- El índice (0, 1, 2, ...)  
+
+## Series con etiquetas
+
+Una ventaja clave es que podemos asignar etiquetas explícitas:
+
+```{python}
+ventas = pd.Series(
+    [500, 700, 400, 200, 1000],
+    index=["Juan", "María", "Miguel", "Pedro", "Ana"]
+)
+ventas
+```
+
+. . .
+
+Ahora, la estructura contiene **información semántica**: sabemos qué venta corresponde a cada vendedor.
+
+## Acceso a elementos
+
+Podemos acceder a los datos de dos formas:
+
+- Por posición:
+
+```{python}
+ventas.iloc[0]
+```
+
+. . .
+
+- Por etiqueta:
+
+```{python}
+ventas["Juan"]
+```
+
+## Operaciones con Series
+
+Una gran ventaja es que las operaciones son **vectorizadas**:
+
+```{python}
+ventas / 100
+```
+
+. . .
+
+También podemos calcular estadísticas directamente:
+
+```{python}
+ventas.mean()
+ventas.sum()
+```
+
+. . .
+
+Esto no requiere bucles explícitos.
+
+## Comparación: listas vs Series
+
+::: {style="font-size: 90%;"}
+| Característica          | Lista de Python       | `pd.Series`              |
+|------------------------|----------------------|----------------------------|
+| Índices                | Implícitos (0,1,2)   | Explícitos y personalizables |
+| Etiquetas              | No                   | Sí                         |
+| Operaciones vectorizadas | Limitadas           | Sí                         |
+| Funciones estadísticas | No integradas        | Integradas (`mean()`, etc.) |
+| Uso en análisis        | Limitado             | Estándar en ciencia de datos |
+:::
+
+. . .
+
+En términos prácticos, una `Series` es una **lista enriquecida con estructura y funcionalidad estadística**.
+
+## Interpretación conceptual
+
+Una `Series` puede interpretarse como:
+
+- Un vector matemático  
+- Una columna de una base de datos  
+- Una función que asigna valores a etiquetas  
+
+. . .
+
+Esta flexibilidad es lo que la convierte en el bloque fundamental de estructuras más complejas, como los *dataframes*.
+
+# Dataframes
+
+Una `pd.Series` puede pensarse como una **columna de datos** en una tabla. La extensión natural es tener la tabla completa, con **múltiples columnas** y **múltiples filas**. Esto nos lleva a la estructura de datos más importante en `pandas`: el **DataFrame**.
+
+## Motivación: de `Series` a `DataFrame`
+
+En la sección anterior vimos que una `pd.Series` es una estructura unidimensional: una colección de datos con un índice.
+
+. . .
+
+Sin embargo, en la práctica rara vez trabajamos con una sola variable aislada. Normalmente, los datos vienen en forma de **múltiples variables observadas simultáneamente**.
+
+. . .
+
+Por ejemplo, para estudiar ventas no basta con conocer el monto vendido. También nos puede interesar saber quién vendió, en qué país, en qué semana o a qué categoría pertenece cada observación.
+
+. . .
+
+Esto nos lleva naturalmente a una estructura bidimensional:
+
+- Varias `Series`
+- Alineadas por un mismo índice
+- Representando distintas variables de un mismo conjunto de observaciones
+
+. . .
+
+Esa estructura es un **DataFrame**.
+
+## Dataframe: una definición más precisa
+
+Un *dataframe* es una colección de `Series` que comparten un índice común.
+
+. . .
+
+Formalmente, podemos pensar un dataframe como una matriz de datos:
+
+$$
+X =
+\begin{bmatrix}
+x_{11} & x_{12} & \cdots & x_{1k} \\
+x_{21} & x_{22} & \cdots & x_{2k} \\
+\vdots & \vdots & \ddots & \vdots \\
+x_{n1} & x_{n2} & \cdots & x_{nk}
+\end{bmatrix}
+$$
+
+donde:
+
+- Cada **fila** representa una observación.
+- Cada **columna** representa una variable.
+- $n$ es el número de observaciones.
+- $k$ es el número de variables.
+
+. . .
+
+Pero, a diferencia de una matriz matemática tradicional, un dataframe permite que cada columna tenga un tipo de dato diferente.
+
+## Dataframe: una introducción
+
+Un *dataframe* es esencialmente una tabla de datos, donde cada columna representa una variable y cada fila representa una observación.
+
+. . .
+
+Imaginemos la siguiente información de ventas:
+
+::: {style="font-size: 85%;"}
+| Id  | Vendedor | Ventas (Bs) |
+|:---:|:--------:|:-----------:|
+|  1  |   Juan   |     500     |
+|  2  |  María   |     700     |
+|  3  |  Miguel  |     400     |
+|  4  |  Pedro   |     200     |
+|  5  |   Ana    |    1000     |
+:::
+
+---
+
+Podemos representarla en `pandas` de la siguiente manera:
+
+```{python}
+import pandas as pd
+
+ventas = pd.DataFrame({
+    "Id": [1, 2, 3, 4, 5],
+    "Vendedor": ["Juan", "María", "Miguel", "Pedro", "Ana"],
+    "Ventas": [500, 700, 400, 200, 1000]
+})
+
+ventas
+```
+
+## Dataframe: interpretar la estructura
+
+Observemos cuidadosamente el objeto anterior.
+
+. . .
+
+- La columna `Id` identifica a cada vendedor.
+- La columna `Vendedor` contiene texto.
+- La columna `Ventas` contiene valores numéricos.
+- Todas las columnas tienen la misma longitud.
+
+. . .
+
+Esto es importante porque un dataframe organiza información **por observación**. La primera fila no es una lista arbitraria de valores: representa a Juan y sus ventas.
+
+. . .
+
+En términos prácticos, un dataframe puede interpretarse de tres formas:
+
+- Como una tabla, similar a una hoja de Excel.
+- Como un conjunto de columnas alineadas.
+- Como una colección de `Series` con un índice común.
+
+## Dataframe: columnas como `Series`
+
+Cada columna de un dataframe es una `Series`.
+
+. . .
+
+Por ejemplo, podemos extraer la columna `Ventas`:
+
+```{python}
+ventas["Ventas"]
+```
+
+. . .
+
+También podemos verificar su tipo:
+
+```{python}
+type(ventas["Ventas"])
+```
+
+. . .
+
+Esto muestra que el dataframe no reemplaza a las `Series`; más bien, las organiza en una estructura más rica.
+
+## Dataframe: agregar columnas
+
+Podemos agregar nuevas columnas al *dataframe* de forma sencilla. Esto equivale a añadir una nueva `Series` alineada con el índice existente.
+
+. . .
+
+Por ejemplo, si queremos agregar el país de cada vendedor:
+
+```{python}
+ventas["Pais"] = ["Bolivia", "Brasil", "Perú", "Bolivia", "Bolivia"]
+
+ventas
+```
+
+. . .
+
+La nueva columna `Pais` tiene cinco valores, uno por cada fila existente.
+
+. . .
+
+Esto es esencial: una columna nueva debe tener una longitud compatible con el número de observaciones.
+
+## Dataframe: columnas con valores faltantes
+
+En datos reales, es frecuente que nos falte información.
+
+. . .
+
+Supongamos que queremos agregar la categoría de cada vendedor, pero no conocemos la categoría de Ana.
+
+. . .
+
+En Python podemos usar `None` para representar ausencia de valor:
+
+```{python}
+ventas["Categoria"] = ["A", "B", "C", "D", None]
+
+ventas
+```
+
+. . .
+
+En `pandas`, los valores faltantes suelen aparecer como `None`, `NaN` o `pd.NA`, dependiendo del tipo de dato.
+
+
+
+## Dataframe: operaciones posibles
+
+¿Qué tipo de operaciones podemos realizar con un *dataframe*?
+
+. . .
+
+Algunas operaciones fundamentales son:
+
+1. Extraer elementos del dataframe: filas, columnas o celdas.
+2. Seleccionar observaciones que cumplan ciertas condiciones.
+3. Agregar nuevas variables.
+4. Transformar variables existentes.
+5. Resumir información mediante agregaciones.
+6. Agrupar datos por categorías.
+
+. . .
+
+::: {.callout-note title="Nota"}
+En la práctica, rara vez se crean *dataframes* manualmente. Lo habitual es importar datos desde archivos `.csv`, `.xlsx`, bases de datos o APIs. Sin embargo, construir uno manualmente ayuda a entender su estructura interna.
+:::
+
+
+# Conclusiones
+
+-   En su concepción más básica, `Python` se asemeja a una *calculadora*, ya que permite realizar cálculos matemáticos simples y más complejos.  
+
+. . .
+
+-   Adicionalmente, el lenguaje nos permite definir *objetos* y, en particular, estructuras como listas, que pueden entenderse como colecciones de elementos.  
+
+. . .
+
+-   Esto es relevante porque sobre estas estructuras se pueden aplicar *funciones* y realizar cálculos más complejos.  
+
+. . .
+
+- Es posible extender `Python` mediante *módulos* y *paquetes*, que permiten incorporar herramientas especializadas para distintos problemas.
+
+. . .
+
+-   Finalmente, `Python` permite trabajar con *dataframes* mediante `pandas`, lo que facilita el análisis de datos en formato tabular, donde cada columna representa una variable y cada fila una observación.  

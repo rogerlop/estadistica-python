@@ -1,0 +1,578 @@
+---
+title: "Muestreo repetido, distribuciones de muestreo, intervalos de confianza y pruebas de hipótesis"
+#subtitle: "Fundamentos conceptuales para la inferencia estadística"
+author: "Roger M. López Justiniano"
+date: today
+lang: es
+fontsize: 12pt
+institute: CENACE - Universidad Privada de Santa Cruz
+format:
+  revealjs:
+    theme: serif
+    fig-align: center
+    self-contained: true
+    css: "../../assets/custom_v2.css"
+    toc: true
+    code-fold: false
+    code-summary: "Check the code"
+    toc-title: "Contenido"
+    toc-location: left
+    toc-depth: 1
+    slide-number: true
+    slide-level: 3
+    link-external-newwindow: true
+    preview-links: true
+    auto-stretch: false
+    transition: fade
+    math: mathjax
+    html-math-method: mathjax
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{python}
+#| label: setup
+#| include: false
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import scipy.stats as stats
+import warnings
+
+warnings.filterwarnings("ignore")
+
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.size": 13,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+})
+```
+
+
+# De la muestra a la inferencia: la arquitectura completa
+
+- El objetivo de la estadística inferencial es **extraer conclusiones sobre una población a partir de una muestra**.  
+- Este problema surge porque los datos observados son solo una realización posible.  
+- La inferencia reconoce explícitamente esta incertidumbre.  
+- Por tanto, el objeto central no es solo el estimador, sino su **variabilidad bajo muestreo repetido**.  
+
+. . .
+
+- La estructura lógica es:  
+  - Muestreo → introduce variabilidad  
+  - Distribuciones de muestreo → la modelan  
+  - TCL → permite aproximaciones  
+  - Intervalos → cuantifican incertidumbre  
+  - Tests → permiten tomar decisiones  
+- Esta secuencia es la base de la teoría clásica de la inferencia estadística.
+
+
+## Población vs. proceso generador de datos
+
+- En algunos contextos, la población es finita (ej. todos los hogares de un país).  
+- En otros, modelamos los datos como realizaciones de un **proceso estocástico**.  
+
+. . .
+
+- En economía, esta segunda interpretación es dominante:  
+  - PIB, inflación, retornos → no son poblaciones finitas estáticas  
+- Se asume que los datos provienen de una distribución subyacente.  
+
+. . .
+
+- Esto permite definir:
+
+$$
+X_1,\dots,X_n \sim iid(\mu,\sigma^2)
+$$
+
+- Esta es una **abstracción útil**, no una verdad literal.  
+
+
+
+## Muestreo y error muestral
+
+- Tomamos una muestra y calculamos la media:
+
+$$
+\bar X = \frac{1}{n}\sum_{i=1}^{n}X_i
+$$
+
+. . .
+
+- $\bar X$ es un estimador de $\mu$, pero no coincide exactamente con él.  
+
+. . .
+
+- La diferencia:
+
+$$
+\bar X - \mu
+$$
+
+es el **error muestral**.  
+
+. . .
+
+- Este error es inevitable: proviene del hecho de observar una parte y no el todo.  
+
+
+
+## Muestreo repetido: la idea clave
+
+- El razonamiento inferencial imagina repetir el muestreo muchas veces.  
+
+. . .
+
+- Cada repetición produce una nueva muestra y un nuevo valor de $\bar X$.  
+
+. . .
+
+- Esto genera una colección:
+
+$$
+\bar X^{(1)}, \bar X^{(2)}, \dots
+$$
+
+. . .
+
+- La distribución de estos valores es la **distribución de muestreo**.  
+
+. . .
+
+- Toda la inferencia se basa en esta idea.  
+
+
+
+## Propiedades de la media muestral
+
+- Bajo supuestos iid:
+
+$$
+E[\bar X] = \mu
+$$
+
+. . .
+
+- Por tanto, $\bar X$ es insesgada.  
+
+. . .
+
+- Además:
+
+$$
+Var(\bar X) = \frac{\sigma^2}{n}
+$$
+
+. . .
+
+- La precisión mejora con el tamaño muestral.  
+
+. . .
+
+- El error estándar es:
+
+$$
+SE(\bar X)=\frac{\sigma}{\sqrt{n}}
+$$
+
+
+
+## Interpretación económica del error estándar
+
+- $\sigma$ mide la dispersión de los datos individuales.  
+
+. . .
+
+- $SE(\bar X)$ mide la incertidumbre del estimador.  
+
+. . .
+
+- Aumentar $n$ reduce la incertidumbre, pero a ritmo decreciente.  
+
+. . .
+
+- En práctica: duplicar precisión requiere cuadruplicar tamaño muestral.  
+
+. . .
+
+- Esto tiene implicaciones directas en encuestas, estudios empíricos y política económica.  
+
+
+## Simulación: población no normal
+
+```{python}
+#| label: poblacion
+#| fig-height: 5
+#| fig-width: 7
+
+np.random.seed(123)
+
+population = np.random.exponential(scale=2, size=100000)
+
+mu = population.mean()
+
+fig, ax = plt.subplots()
+ax.hist(population, bins=80, density=True)
+ax.axvline(mu, linewidth=2)
+ax.set_title("Población asimétrica")
+plt.show()
+```
+
+
+
+## Simulación: muestreo repetido
+
+```{python}
+#| label: muestreo
+#| fig-height: 5
+#| fig-width: 7
+
+np.random.seed(123)
+
+n = 30
+means = [
+    np.random.choice(population, size=n).mean()
+    for _ in range(5000)
+]
+
+plt.hist(means, bins=60, density=True)
+plt.title("Distribución de la media muestral")
+plt.show()
+```
+
+. . .
+
+- Aunque la población es asimétrica, la media muestral es más regular.  
+
+
+
+## Teorema Central del Límite (TCL)
+
+- Si $X_i$ son iid con varianza finita:
+
+$$
+\frac{\bar X - \mu}{\sigma/\sqrt{n}} \xrightarrow{d} N(0,1)
+$$
+
+. . .
+
+- Para $n$ grande:
+
+$$
+\bar X \approx N\left(\mu, \frac{\sigma^2}{n}\right)
+$$
+
+. . .
+
+- Requiere:  
+  - independencia  
+  - misma distribución  
+  - varianza finita  
+
+. . .
+
+- No corrige sesgo de muestreo.  
+
+
+
+## Simulación: efecto del tamaño muestral
+
+```{python}
+#| label: tcl-n
+#| fig-height: 5
+#| fig-width: 7
+
+fig, ax = plt.subplots()
+
+for n in [5, 30, 100]:
+    means = [
+        np.random.choice(population, size=n).mean()
+        for _ in range(3000)
+    ]
+    ax.hist(means, bins=40, alpha=0.4, label=f"n={n}")
+
+ax.legend()
+plt.show()
+```
+
+
+
+# Distribuciones de muestreo: definición
+
+- La distribución de muestreo describe la variabilidad de un estadístico.  
+
+. . .
+
+- Ejemplos:  
+  - media muestral $\bar X$  
+  - proporción muestral $\hat p$  
+  - varianza muestral  
+
+. . .
+
+- Son el objeto central de la inferencia.  
+
+
+
+## Distribución de proporciones
+
+- Si $X_i \sim Bernoulli(p)$:
+
+$$
+\hat p = \frac{1}{n}\sum X_i
+$$
+
+. . .
+
+- Para muestras grandes:
+
+$$
+\hat p \approx N\left(p, \frac{p(1-p)}{n}\right)
+$$
+
+. . .
+
+- Esta aproximación también proviene del TCL.  
+
+
+
+## Distribución t de Student
+
+- Cuando $\sigma$ es desconocida:
+
+$$
+T = \frac{\bar X - \mu}{S/\sqrt{n}}
+$$
+
+. . .
+
+- Si la población es normal:
+
+$$
+T \sim t_{n-1}
+$$
+
+. . .
+
+- Para muestras grandes, t ≈ normal.  
+
+
+
+# Intervalos de confianza: construcción
+
+- Para $\sigma$ conocida:
+
+$$
+\bar X \pm z_{\alpha/2}\frac{\sigma}{\sqrt{n}}
+$$
+
+. . .
+
+- Para $\sigma$ desconocida:
+
+$$
+\bar X \pm t_{\alpha/2,n-1}\frac{S}{\sqrt{n}}
+$$
+
+. . .
+
+- Basados en la distribución de muestreo.  
+
+
+
+## Interpretación correcta
+
+- El parámetro $\mu$ es fijo.  
+
+. . .
+
+- El intervalo es aleatorio.  
+
+. . .
+
+- El 95% se refiere al procedimiento, no al intervalo específico.  
+
+. . .
+
+- Es una propiedad de largo plazo bajo muestreo repetido.  
+
+
+
+## Simulación: cobertura
+
+```{python}
+#| label: cobertura
+#| fig-height: 5
+#| fig-width: 7
+
+np.random.seed(123)
+
+mu = 0
+sigma = 1
+n = 30
+
+covers = []
+
+for _ in range(1000):
+    sample = np.random.normal(mu, sigma, n)
+    xbar = sample.mean()
+    s = sample.std(ddof=1)
+    crit = stats.t.ppf(0.975, n-1)
+    lower = xbar - crit*s/np.sqrt(n)
+    upper = xbar + crit*s/np.sqrt(n)
+    covers.append(lower <= mu <= upper)
+
+print(np.mean(covers))
+```
+
+
+
+# Pruebas de hipótesis: lógica
+
+- Queremos evaluar si los datos son compatibles con una afirmación.  
+
+. . .
+
+- Hipótesis:  
+  - $H_0: \mu = \mu_0$  
+  - $H_1: \mu \neq \mu_0$  
+
+. . .
+
+- Usamos un estadístico basado en la distribución de muestreo.  
+
+
+
+## Estadístico y decisión
+
+- Si $\sigma$ es conocida:
+
+$$
+Z = \frac{\bar X - \mu_0}{\sigma/\sqrt{n}}
+$$
+
+. . .
+
+- Rechazamos si $|Z| > z_{\alpha/2}$.  
+
+. . .
+
+- Alternativamente, usamos el p-valor.  
+
+
+
+## p-valor: interpretación
+
+- Probabilidad de observar un resultado tan extremo bajo $H_0$.  
+
+. . .
+
+- No es la probabilidad de que $H_0$ sea verdadera.  
+
+. . .
+
+- Mide evidencia contra $H_0$.  
+
+
+
+## Errores tipo I y II
+
+- Error tipo I:
+
+$$
+P(\text{rechazar } H_0 | H_0 \text{ verdadera}) = \alpha
+$$
+
+. . .
+
+- Error tipo II: no rechazar cuando es falsa.  
+
+. . .
+
+- Potencia = $1 - \beta$.  
+
+
+
+## Simulación: error tipo I
+
+```{python}
+#| label: tipo1
+#| fig-height: 5
+#| fig-width: 7
+
+np.random.seed(123)
+
+mu0 = 0
+sigma = 1
+n = 30
+
+rej = []
+
+for _ in range(10000):
+    sample = np.random.normal(mu0, sigma, n)
+    z = (sample.mean() - mu0)/(sigma/np.sqrt(n))
+    rej.append(abs(z) > 1.96)
+
+print(np.mean(rej))
+```
+
+
+
+## Significancia estadística vs económica
+
+- Rechazar $H_0$ no implica relevancia económica.  
+
+. . .
+
+- Con muestras grandes, efectos pequeños pueden ser significativos.  
+
+. . .
+
+- Es necesario evaluar magnitud, no solo significancia.  
+
+. . .
+
+- Este punto es central en aplicaciones económicas  [oai_citation:1‡_Richard J. Larsen, Morris L. Marx - An Introduction to Mathematical Statistics and Its Applications (2018, Pearson) - libgen.li.pdf](sediment://file_00000000e7d47246bdc7750cd4034c3c)  
+
+
+
+# Conexión final
+
+- Muestreo → introduce error  
+- TCL → permite aproximación normal  
+- Distribución de muestreo → cuantifica incertidumbre  
+- Intervalos → estimación  
+- Tests → decisión  
+
+. . .
+
+- Toda la inferencia es una teoría de decisiones bajo incertidumbre.  
+
+
+
+## Ejercicio final
+
+- Suponga que estima inflación mensual con $n=24$.  
+
+. . .
+
+- ¿Se cumplen los supuestos iid?  
+
+. . .
+
+- ¿Cómo afecta la autocorrelación al error estándar?  
+
+. . .
+
+- ¿Qué implicaciones tiene para intervalos y tests?  
+
+. . .
+
+- Discuta la diferencia entre significancia estadística y relevancia económica.  

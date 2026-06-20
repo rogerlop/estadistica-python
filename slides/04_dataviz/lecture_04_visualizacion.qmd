@@ -1,0 +1,2418 @@
+---
+title: "Visualización de datos en Python"
+subtitle: "Matplotlib, Seaborn y ggplot para análisis estadístico"
+author: "Roger M. López Justiniano"
+#date: today
+lang: es
+fontsize: 12pt
+institute: CENACE - Universidad Privada de Santa Cruz
+format:
+  revealjs:
+    theme: serif
+    fig-align: center
+    self-contained: true
+    css: "../../assets/custom_v2.css"
+    toc: true
+    code-fold: true
+    code-summary: "Ver código"
+    toc-title: "Contenido"
+    toc-location: left
+    toc-depth: 1
+    slide-number: true
+    slide-level: 3
+    link-external-newwindow: true
+    preview-links: true
+    auto-stretch: false
+    transition: fade
+    math: mathjax
+    html-math-method: mathjax
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{python}
+#| label: setup
+#| include: false
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import warnings
+
+warnings.filterwarnings("ignore")
+
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.size": 10.5,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "figure.figsize": (6.2, 3.7),
+    "axes.grid": True,
+    "grid.alpha": 0.25,
+})
+
+pd.options.display.float_format = "{:,.2f}".format
+```
+
+# Visualización de datos
+
+## Pensar con gráficos
+
+La visualización transforma datos en comparaciones visibles. Un buen gráfico permite ver niveles, cambios, dispersión, valores extremos y relaciones entre variables.
+
+. . .
+
+En estadística aplicada, los gráficos cumplen tres funciones complementarias:
+
+- **Explorar:** encontrar patrones antes de formalizar un modelo.
+- **Diagnosticar:** detectar errores, outliers, escalas problemáticas y datos faltantes.
+- **Comunicar:** presentar un resultado de forma clara, honesta y reproducible.
+
+. . .
+
+La visualización empieza con una pregunta concreta. Por ejemplo: ¿cómo evoluciona una variable?, ¿qué países tienen valores más altos?, ¿qué tan dispersos están los datos?, ¿dos variables parecen asociarse?
+
+. . .
+
+La forma del gráfico surge de la estructura de esa pregunta.
+
+## De datos a marcas visuales
+
+Un gráfico codifica variables mediante atributos visuales.
+
+. . .
+
+Formalmente, podemos pensar en una visualización como una transformación:
+
+$$
+g: \mathcal{D} \rightarrow \mathcal{V},
+$$
+
+donde $\mathcal{D}$ es el conjunto de datos y $\mathcal{V}$ representa marcas visuales.
+
+. . .
+
+Una observación de la base puede convertirse en un punto, una barra, una línea o una caja. Una variable puede convertirse en posición, color, tamaño, forma o panel.
+
+. . .
+
+La calidad del gráfico depende de que la codificación visual preserve la comparación relevante.
+
+## Variables y gráficos naturales
+
+La elección del gráfico depende del tipo de variable y del tipo de comparación.
+
+. . .
+
+| Pregunta empírica | Variables | Gráfico natural |
+|---|---|---|
+| Evolución temporal | tiempo + numérica | línea |
+| Ranking o comparación | categórica + numérica | barras o puntos |
+| Distribución | numérica | histograma, densidad, boxplot |
+| Relación bivariada | numérica + numérica | dispersión |
+| Diferencias entre grupos | numérica + categoría | boxplot, violin plot |
+| Dinámica por grupos | tiempo + numérica + categoría | líneas con color o facetas |
+
+. . .
+
+Una serie temporal enfatiza continuidad. Un histograma enfatiza forma distributiva. Una nube de puntos enfatiza asociación.
+
+## Tres formas de construir gráficos en Python
+
+:::: {.columns}
+
+::: {.column width="30%"}
+**Matplotlib**
+
+Trabaja con una lógica de objetos: figura, ejes y elementos visuales. Da control preciso sobre cada componente del gráfico.
+
+[Documentación oficial](https://matplotlib.org/stable/)
+:::
+
+::: {.column width="3%"}
+:::
+
+::: {.column width="30%"}
+**Seaborn**
+
+Trabaja con una interfaz estadística de alto nivel. Recibe `DataFrame`, nombres de variables y codificaciones como `hue`, `size` o `col`.
+
+[Documentación oficial](https://seaborn.pydata.org/)
+:::
+
+::: {.column width="3%"}
+:::
+
+::: {.column width="30%"}
+**plotnine / ggplot**
+
+Trabaja con una gramática de gráficos. Un gráfico se construye como suma de datos, mapeos, geometrías, escalas y temas.
+
+[Documentación oficial](https://plotnine.org/)
+:::
+
+::::
+
+. . .
+
+La progresión de la clase es: control explícito con `matplotlib`, síntesis estadística con `seaborn` y gramática declarativa con `plotnine`.
+
+# Datos de trabajo
+
+## Importar el dataset del FMI
+
+Usaremos el dataset del FMI trabajado en la lecture 03.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+data = pd.read_csv("../../data/raw/Data_FMI.csv")
+
+data.head()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `read_csv()` carga el archivo como `DataFrame`.
+- Cada fila representa una observación país-año.
+- Cada columna representa una variable.
+- Antes de graficar conviene mirar la estructura de la base.
+- Un gráfico confiable empieza con datos correctamente importados.
+
+:::
+
+:::
+
+::::
+
+## Inspección mínima antes de graficar
+
+Un gráfico debe construirse después de revisar dimensión, nombres y tipos de datos.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+data.shape
+```
+
+```{python}
+data.dtypes
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `shape` indica número de filas y columnas.
+- `dtypes` muestra cómo Python interpreta cada variable.
+- Las variables numéricas deben estar como `int` o `float`.
+- Las variables categóricas suelen estar como `object` o `category`.
+- Una variable numérica importada como texto puede producir errores o gráficos engañosos.
+
+:::
+
+:::
+
+::::
+
+## Variables principales
+
+Trabajaremos con variables macroeconómicas que permiten mostrar series temporales, distribuciones y relaciones bivariadas.
+
+. . .
+
+| Variable | Uso en la clase |
+|---|---|
+| `Pais` | identifica el país |
+| `Año` | ordena observaciones en el tiempo |
+| `GDPpc_usd` | mide PIB per cápita en dólares |
+| `Inflacion` | mide inflación anual |
+| `Deficit_Fiscal` | mide balance fiscal |
+| `Deuda` | mide deuda pública |
+| `Cuenta_Corriente` | mide saldo externo |
+
+. . .
+
+Estas variables permiten pasar de una tabla país-año a preguntas sobre evolución, comparación, distribución y asociación.
+
+## Dataset para Bolivia
+
+Construiremos una serie temporal para Bolivia.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+data_bol = (
+    data
+    .query('Pais == "Bolivia" and Año >= 1981 and Año <= 2023')
+    .sort_values("Año")
+    .copy()
+)
+
+data_bol.tail()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Este dataset contiene una sola unidad: Bolivia.
+- Cada fila corresponde a un año.
+- `sort_values("Año")` asegura orden temporal.
+- Este formato es adecuado para gráficos de línea.
+- La línea resume una trayectoria histórica.
+
+:::
+
+:::
+
+::::
+
+## Dataset comparativo
+
+Construiremos una base con varios países para comparar trayectorias.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+paises_comp = ["Bolivia", "Chile", "Peru", "Spain", "United States"]
+
+data_comp = (
+    data
+    .query("Pais in @paises_comp and Año >= 2000 and Año <= 2023")
+    .sort_values(["Pais", "Año"])
+    .copy()
+)
+
+data_comp.head()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Este dataset contiene varias unidades.
+- Cada país tiene observaciones anuales.
+- `Pais` identifica grupos.
+- La variable de grupo puede convertirse en color, línea o faceta.
+- Este formato permite comparar trayectorias macroeconómicas.
+
+:::
+
+:::
+
+::::
+
+## Dataset transversal
+
+Construiremos un corte transversal para comparar países en un mismo año.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+data_2023 = (
+    data
+    .query("Año == 2023")
+    .dropna(subset=["GDPpc_usd", "Inflacion", "Deuda"])
+    .copy()
+)
+
+data_2023[["Pais", "Año", "GDPpc_usd", "Inflacion", "Deuda"]].head()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Cada observación representa un país en 2023.
+- La comparación es transversal.
+- Este formato sirve para rankings.
+- También sirve para histogramas y boxplots.
+- Para relaciones bivariadas, cada país se representa como un punto.
+
+:::
+
+:::
+
+::::
+
+# Matplotlib
+
+## Base conceptual de Matplotlib
+
+Matplotlib es la base histórica del ecosistema de visualización en Python. Su diseño se organiza alrededor de objetos gráficos.
+
+. . .
+
+La idea central es construir una visualización dentro de una **figura** y uno o varios **ejes**.
+
+. . .
+
+La `Figure` es el lienzo completo. El `Axes` es el sistema de coordenadas donde se dibujan datos, etiquetas, leyendas, escalas y anotaciones.
+
+. . .
+
+La recomendación para trabajo reproducible es usar la interfaz explícita:
+
+$$
+\texttt{fig, ax = plt.subplots()}
+$$
+
+. . .
+
+Para explorar opciones adicionales se puede consultar la [documentación oficial de Matplotlib](https://matplotlib.org/stable/).
+
+## La jerarquía de objetos
+
+Matplotlib representa un gráfico como una jerarquía de objetos.
+
+. . .
+
+| Objeto | Rol |
+|---|---|
+| `Figure` | lienzo completo |
+| `Axes` | sistema de coordenadas |
+| `Axis` | eje horizontal o vertical |
+| `Artist` | elemento dibujado: línea, texto, barra, punto |
+| `Legend` | correspondencia entre marcas y categorías |
+
+. . .
+
+Esta jerarquía explica por qué se escriben instrucciones como `ax.plot()`, `ax.set_title()` o `ax.legend()`.
+
+. . .
+
+La lógica es: crear un eje, dibujar elementos sobre ese eje y ajustar sus componentes.
+
+## Patrón general en Matplotlib
+
+Un gráfico básico suele seguir cuatro pasos.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+#| eval: false
+
+fig, ax = plt.subplots()
+
+ax.plot(x, y)
+
+ax.set_title("Título")
+ax.set_xlabel("Eje horizontal")
+ax.set_ylabel("Eje vertical")
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `plt.subplots()` crea figura y ejes.
+- `ax.plot()` agrega una marca visual.
+- `set_title()` agrega contexto.
+- `set_xlabel()` y `set_ylabel()` declaran unidades y significado.
+- `plt.show()` muestra el resultado final.
+
+:::
+
+:::
+
+::::
+
+## Matplotlib: ejemplo
+
+Antes de usar datos reales, conviene entender la mecánica básica con una tabla pequeña.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+ventas = pd.DataFrame({
+    "mes": ["Ene", "Feb", "Mar", "Abr", "May"],
+    "ventas": [12, 15, 13, 18, 21]
+})
+
+fig, ax = plt.subplots(figsize=(6.2, 3.4))
+
+ax.plot(
+    ventas["mes"],
+    ventas["ventas"],
+    marker="o",
+    linewidth=2
+)
+
+ax.set_title("Ventas mensuales")
+ax.set_xlabel("Mes")
+ax.set_ylabel("Ventas")
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- La tabla tiene una variable categórica ordenada: `mes`.
+- La variable numérica es `ventas`.
+- `ax.plot()` dibuja la línea.
+- `marker="o"` muestra cada observación.
+- `linewidth=2` aumenta el grosor de la línea.
+
+:::
+
+:::
+
+::::
+
+## Matplotlib: opciones básicas
+
+El mismo dataset permite mostrar que Matplotlib controla detalles visuales de forma explícita.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.2, 3.4))
+
+ax.bar(
+    ventas["mes"],
+    ventas["ventas"]
+)
+
+ax.set_title("Ventas mensuales")
+ax.set_xlabel("Mes")
+ax.set_ylabel("Ventas")
+ax.set_ylim(0, 25)
+
+for i, valor in enumerate(ventas["ventas"]):
+    ax.text(i, valor + 0.5, str(valor), ha="center")
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `ax.bar()` cambia la geometría: de línea a barras.
+- `set_ylim()` controla el rango vertical.
+- `ax.text()` agrega etiquetas directamente sobre el gráfico.
+- La posición del texto se controla con coordenadas.
+- Este control fino es una fortaleza de Matplotlib.
+
+:::
+
+:::
+
+::::
+
+## Matplotlib: serie temporal
+
+Pregunta: ¿cómo evolucionó el PIB per cápita de Bolivia entre 1981 y 2023?
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.2, 3.7))
+
+ax.plot(
+    data_bol["Año"],
+    data_bol["GDPpc_usd"]
+)
+
+ax.set_title("Bolivia: PIB per cápita")
+ax.set_xlabel("Año")
+ax.set_ylabel("PIB per cápita (USD)")
+ax.yaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- La variable temporal se ubica en el eje horizontal.
+- La variable económica se ubica en el eje vertical.
+- La línea conecta observaciones ordenadas.
+- La pendiente entre dos años resume el cambio observado.
+- El gráfico permite identificar fases de crecimiento, caída o estancamiento.
+
+:::
+
+:::
+
+::::
+
+## Matplotlib: referencia horizontal
+
+Agregar una referencia ayuda a comparar cada año con un valor resumen.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+gdp_promedio = data_bol["GDPpc_usd"].mean()
+
+fig, ax = plt.subplots(figsize=(6.2, 3.7))
+
+ax.plot(
+    data_bol["Año"],
+    data_bol["GDPpc_usd"],
+    marker="o",
+    linewidth=1.8
+)
+
+ax.axhline(gdp_promedio, linestyle="--", linewidth=1)
+
+ax.text(
+    data_bol["Año"].min(),
+    gdp_promedio,
+    f"Promedio: {gdp_promedio:,.0f} USD",
+    va="bottom"
+)
+
+ax.set_title("Bolivia: PIB per cápita y promedio histórico")
+ax.set_xlabel("Año")
+ax.set_ylabel("PIB per cápita (USD)")
+ax.yaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Los marcadores muestran observaciones anuales.
+- La línea punteada representa el promedio del período.
+- `axhline()` agrega una referencia horizontal.
+- `text()` permite escribir sobre el gráfico.
+- El promedio ordena la lectura, pero no describe toda la distribución temporal.
+
+:::
+
+:::
+
+::::
+
+## Matplotlib: barras horizontales
+
+Pregunta: ¿qué países tienen mayor PIB per cápita en 2023?
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+top_gdp_2023 = (
+    data_2023
+    .nlargest(10, "GDPpc_usd")
+    .sort_values("GDPpc_usd")
+)
+
+fig, ax = plt.subplots(figsize=(6.4, 4.0))
+
+ax.barh(
+    top_gdp_2023["Pais"],
+    top_gdp_2023["GDPpc_usd"]
+)
+
+ax.set_title("Top 10 países por PIB per cápita en 2023")
+ax.set_xlabel("PIB per cápita (USD)")
+ax.set_ylabel("")
+ax.xaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Las barras comparan magnitudes entre categorías.
+- El orden facilita leer el ranking.
+- La orientación horizontal ayuda con nombres largos.
+- La longitud de la barra representa el valor numérico.
+- El eje debe indicar unidad y escala.
+
+:::
+
+:::
+
+::::
+
+## Matplotlib: histograma
+
+Pregunta: ¿cómo se distribuye el PIB per cápita entre países en 2023?
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.2, 3.7))
+
+ax.hist(
+    data_2023["GDPpc_usd"],
+    bins=25,
+    edgecolor="black"
+)
+
+ax.set_title("Distribución del PIB per cápita entre países en 2023")
+ax.set_xlabel("PIB per cápita (USD)")
+ax.set_ylabel("Número de países")
+ax.xaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- El histograma agrupa valores en intervalos.
+- Cada barra cuenta observaciones dentro de un rango.
+- La forma revela concentración, asimetría y cola.
+- En variables de ingreso suelen aparecer valores extremos altos.
+- La escala horizontal influye mucho en la lectura.
+
+:::
+
+:::
+
+::::
+
+## Matplotlib: sensibilidad a `bins`
+
+La cantidad de intervalos afecta el nivel de detalle del histograma.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, axes = plt.subplots(1, 2, figsize=(6.7, 3.3))
+
+axes[0].hist(data_2023["GDPpc_usd"], bins=8, edgecolor="black")
+axes[0].set_title("8 intervalos")
+axes[0].set_xlabel("PIB pc")
+axes[0].set_ylabel("Países")
+axes[0].xaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+axes[1].hist(data_2023["GDPpc_usd"], bins=35, edgecolor="black")
+axes[1].set_title("35 intervalos")
+axes[1].set_xlabel("PIB pc")
+axes[1].set_ylabel("Países")
+axes[1].xaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.tight_layout()
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Menos intervalos producen una lectura agregada.
+- Más intervalos muestran detalle local.
+- La forma general debe ser razonablemente estable.
+- Cambios fuertes al modificar `bins` sugieren cautela.
+- El histograma es una representación discretizada de una variable continua.
+
+:::
+
+:::
+
+::::
+
+## Matplotlib: boxplot
+
+El boxplot resume una distribución mediante cuantiles.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.2, 3.2))
+
+ax.boxplot(
+    data_2023["GDPpc_usd"],
+    vert=False,
+    showmeans=True
+)
+
+ax.set_title("PIB per cápita entre países en 2023")
+ax.set_xlabel("PIB per cápita (USD)")
+ax.xaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- La línea central representa la mediana.
+- La caja contiene el rango intercuartílico.
+- El rango intercuartílico es $IQR = Q_{0.75} - Q_{0.25}$.
+- La media se muestra con `showmeans=True`.
+- Una media lejos de la mediana indica asimetría.
+
+:::
+
+:::
+
+::::
+
+## Matplotlib: dispersión
+
+Pregunta: ¿cómo se relacionan PIB per cápita e inflación entre países en 2023?
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.2, 3.7))
+
+ax.scatter(
+    data_2023["GDPpc_usd"],
+    data_2023["Inflacion"],
+    alpha=0.65
+)
+
+ax.set_title("PIB per cápita e inflación en 2023")
+ax.set_xlabel("PIB per cápita (USD)")
+ax.set_ylabel("Inflación (%)")
+ax.xaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Cada punto representa un país.
+- La posición horizontal mide ingreso.
+- La posición vertical mide inflación.
+- La nube permite observar dirección, forma y dispersión.
+- La asociación visual no equivale a una relación causal.
+
+:::
+
+:::
+
+::::
+
+## Matplotlib: escala logarítmica
+
+En variables de ingreso, la escala logarítmica ayuda a comparar diferencias proporcionales.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.2, 3.7))
+
+ax.scatter(
+    data_2023["GDPpc_usd"],
+    data_2023["Inflacion"],
+    alpha=0.65
+)
+
+ax.set_xscale("log")
+ax.set_title("PIB per cápita e inflación en 2023")
+ax.set_xlabel("PIB per cápita (USD, escala log)")
+ax.set_ylabel("Inflación (%)")
+ax.xaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- La transformación es $z_i = \log(x_i)$.
+- Se requiere $x_i > 0$.
+- La escala logarítmica compara proporciones.
+- Duplicar el ingreso ocupa una distancia visual similar en distintos niveles.
+- La etiqueta del eje debe indicar la escala usada.
+
+:::
+
+:::
+
+::::
+
+## Matplotlib: varias líneas
+
+Pregunta: ¿cómo se comparan las trayectorias de PIB per cápita desde 2000?
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.4, 4.0))
+
+for pais, df_pais in data_comp.groupby("Pais"):
+    ax.plot(
+        df_pais["Año"],
+        df_pais["GDPpc_usd"],
+        marker="o",
+        linewidth=1.4,
+        label=pais
+    )
+
+ax.set_title("PIB per cápita: comparación entre países")
+ax.set_xlabel("Año")
+ax.set_ylabel("PIB per cápita (USD)")
+ax.yaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+ax.legend(title="País", fontsize=7)
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Cada país se dibuja como una línea separada.
+- `groupby("Pais")` crea subconjuntos por país.
+- El ciclo `for` permite controlar cada serie.
+- La leyenda conecta color y país.
+- Muchas líneas pueden saturar la visualización.
+
+:::
+
+:::
+
+::::
+
+## Matplotlib: anotaciones
+
+Las anotaciones dirigen la atención hacia un dato relevante.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+max_row = data_bol.loc[data_bol["GDPpc_usd"].idxmax()]
+
+fig, ax = plt.subplots(figsize=(6.2, 3.7))
+
+ax.plot(
+    data_bol["Año"],
+    data_bol["GDPpc_usd"],
+    marker="o",
+    linewidth=1.8
+)
+
+ax.annotate(
+    f"Máximo: {max_row['Año']:.0f}",
+    xy=(max_row["Año"], max_row["GDPpc_usd"]),
+    xytext=(max_row["Año"] - 10, max_row["GDPpc_usd"] * 1.08),
+    arrowprops={"arrowstyle": "->"}
+)
+
+ax.set_title("Bolivia: PIB per cápita con anotación")
+ax.set_xlabel("Año")
+ax.set_ylabel("PIB per cápita (USD)")
+ax.yaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `idxmax()` ubica la observación máxima.
+- `annotate()` agrega texto y flecha.
+- La anotación debe ser breve.
+- Su función es guiar la lectura.
+- Conviene anotar pocos puntos para mantener claridad.
+
+:::
+
+:::
+
+::::
+
+## Matplotlib: síntesis conceptual
+
+Matplotlib es especialmente útil cuando se quiere controlar la construcción del gráfico paso por paso.
+
+. . .
+
+Su lógica conceptual es:
+
+$$
+\text{crear eje} \rightarrow \text{dibujar marcas} \rightarrow \text{ajustar componentes}.
+$$
+
+. . .
+
+Conviene usarlo para:
+
+- gráficos finales con personalización fina;
+- anotaciones específicas;
+- ajustes precisos de ejes y escalas;
+- composición manual de paneles;
+- integración con otros paquetes que devuelven objetos `Axes`.
+
+. . .
+
+El patrón `fig, ax = plt.subplots()` ayuda a escribir código claro, reproducible y extensible.
+
+# Seaborn
+
+## Base conceptual de Seaborn
+
+Seaborn es una librería de visualización estadística construida sobre Matplotlib.
+
+. . .
+
+Su aporte principal es trabajar directamente con datos tabulares. En lugar de pasar vectores aislados, se pasa un `DataFrame` y se nombran las columnas.
+
+. . .
+
+La estructura típica es:
+
+$$
+\texttt{sns.funcion(data=df, x="variable", y="variable", hue="grupo")}
+$$
+
+. . .
+
+Para explorar opciones adicionales se puede consultar la [documentación oficial de Seaborn](https://seaborn.pydata.org/).
+
+## Ejes, figuras y funciones de alto nivel
+
+Seaborn tiene dos niveles de funciones.
+
+. . .
+
+| Tipo | Ejemplos | Resultado |
+|---|---|---|
+| Funciones de ejes | `lineplot`, `scatterplot`, `histplot`, `boxplot` | dibujan sobre un `Axes` |
+| Funciones de figura | `relplot`, `displot`, `catplot`, `lmplot` | crean una figura completa, usualmente con facetas |
+
+. . .
+
+En esta clase usaremos principalmente funciones de ejes porque encajan bien con la estructura `fig, ax = plt.subplots()`.
+
+. . .
+
+Para facetas, usaremos `FacetGrid`, que permite repetir un mismo gráfico en varios paneles.
+
+## Importar Seaborn
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+import seaborn as sns
+
+sns.set_theme(style="whitegrid")
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `import seaborn as sns` es la convención estándar.
+- `set_theme()` define una apariencia general.
+- `whitegrid` facilita leer valores sobre los ejes.
+- Seaborn usa Matplotlib internamente.
+- Por eso se puede ajustar el gráfico con métodos de `ax`.
+
+:::
+
+:::
+
+::::
+
+## Seaborn: ejemplo 
+
+Seaborn trabaja bien cuando los datos están organizados en formato tabular.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+ventas_grupo = pd.DataFrame({
+    "semana": [1, 2, 3, 4, 1, 2, 3, 4],
+    "ventas": [10, 12, 15, 18, 9, 11, 13, 16],
+    "tienda": ["A", "A", "A", "A", "B", "B", "B", "B"]
+})
+
+fig, ax = plt.subplots(figsize=(6.2, 3.4))
+
+sns.lineplot(
+    data=ventas_grupo,
+    x="semana",
+    y="ventas",
+    hue="tienda",
+    marker="o",
+    ax=ax
+)
+
+ax.set_title("Ventas por tienda")
+ax.set_xlabel("Semana")
+ax.set_ylabel("Ventas")
+ax.legend(title="Tienda")
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `data=` recibe toda la tabla.
+- `x=` y `y=` nombran columnas.
+- `hue="tienda"` separa grupos por color.
+- No se escribe un ciclo por tienda.
+- La leyenda se construye automáticamente.
+
+:::
+
+:::
+
+::::
+
+## Seaborn: opciones básicas
+
+Con pequeños cambios se pueden agregar nuevas codificaciones visuales.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+ventas_grupo["clientes"] = [30, 35, 40, 44, 25, 29, 33, 38]
+
+fig, ax = plt.subplots(figsize=(6.2, 3.4))
+
+sns.scatterplot(
+    data=ventas_grupo,
+    x="clientes",
+    y="ventas",
+    hue="tienda",
+    size="semana",
+    sizes=(40, 160),
+    ax=ax
+)
+
+ax.set_title("Ventas, clientes y semana")
+ax.set_xlabel("Clientes")
+ax.set_ylabel("Ventas")
+ax.legend(title="Codificación")
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- La posición muestra relación entre clientes y ventas.
+- `hue` codifica la tienda.
+- `size` codifica la semana.
+- Una codificación adicional puede enriquecer la lectura.
+- Demasiadas codificaciones pueden volver confuso el gráfico.
+
+:::
+
+:::
+
+::::
+
+## Seaborn: serie temporal
+
+Pregunta: ¿cómo evolucionó el PIB per cápita de Bolivia?
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.2, 3.7))
+
+sns.lineplot(
+    data=data_bol,
+    x="Año",
+    y="GDPpc_usd",
+    marker="o",
+    ax=ax
+)
+
+ax.set_title("Bolivia: PIB per cápita")
+ax.set_xlabel("Año")
+ax.set_ylabel("PIB per cápita (USD)")
+ax.yaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `data=` recibe el `DataFrame`.
+- `x=` y `y=` reciben nombres de columnas.
+- `marker="o"` marca las observaciones anuales.
+- El código explicita la relación entre variables.
+- Seaborn reduce el trabajo repetitivo de Matplotlib.
+
+:::
+
+:::
+
+::::
+
+## Seaborn: comparación con `hue`
+
+`hue` convierte una variable categórica en color.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.4, 4.0))
+
+sns.lineplot(
+    data=data_comp,
+    x="Año",
+    y="GDPpc_usd",
+    hue="Pais",
+    marker="o",
+    ax=ax
+)
+
+ax.set_title("PIB per cápita: comparación entre países")
+ax.set_xlabel("Año")
+ax.set_ylabel("PIB per cápita (USD)")
+ax.yaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+ax.legend(title="País", fontsize=7)
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `hue="Pais"` crea una línea por país.
+- La leyenda se genera automáticamente.
+- El color representa pertenencia a grupo.
+- La estructura es útil para comparar series.
+- Si hay muchos grupos, la lectura puede saturarse.
+
+:::
+
+:::
+
+::::
+
+## Seaborn: histograma y densidad
+
+Pregunta: ¿cómo se distribuye el PIB per cápita entre países?
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.2, 3.7))
+
+sns.histplot(
+    data=data_2023,
+    x="GDPpc_usd",
+    bins=25,
+    kde=True,
+    ax=ax
+)
+
+ax.set_title("Distribución del PIB per cápita entre países en 2023")
+ax.set_xlabel("PIB per cápita (USD)")
+ax.set_ylabel("Número de países")
+ax.xaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `histplot()` muestra frecuencias por intervalo.
+- `kde=True` agrega una curva suavizada.
+- La curva KDE resume la forma general.
+- El histograma mantiene el conteo observado.
+- La lectura combina frecuencia y forma distributiva.
+
+:::
+
+:::
+
+::::
+
+## Seaborn: boxplot por país
+
+Pregunta: ¿cómo se distribuyó la inflación en los países seleccionados entre 2000 y 2023?
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+inflacion_comp = (
+    data_comp
+    .dropna(subset=["Inflacion"])
+    .copy()
+)
+
+fig, ax = plt.subplots(figsize=(6.4, 4.0))
+
+sns.boxplot(
+    data=inflacion_comp,
+    x="Pais",
+    y="Inflacion",
+    ax=ax
+)
+
+ax.set_title("Distribución de inflación por país, 2000-2023")
+ax.set_xlabel("")
+ax.set_ylabel("Inflación (%)")
+ax.tick_params(axis="x", rotation=30)
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Cada caja resume la inflación histórica de un país.
+- La línea central muestra la mediana.
+- La caja muestra el rango intercuartílico.
+- Los puntos extremos muestran años atípicos.
+- Este gráfico compara distribuciones completas.
+
+:::
+
+:::
+
+::::
+
+## Seaborn: violin plot
+
+El violin plot combina comparación por grupos y forma distributiva.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.4, 4.0))
+
+sns.violinplot(
+    data=inflacion_comp,
+    x="Pais",
+    y="Inflacion",
+    inner="quartile",
+    cut=0,
+    ax=ax
+)
+
+ax.set_title("Distribución de inflación por país, 2000-2023")
+ax.set_xlabel("")
+ax.set_ylabel("Inflación (%)")
+ax.tick_params(axis="x", rotation=30)
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- El ancho del violín muestra concentración.
+- `inner="quartile"` agrega cuartiles.
+- `cut=0` evita extender la densidad fuera del rango observado.
+- El gráfico muestra forma y resumen.
+- Es útil cuando la forma de la distribución importa.
+
+:::
+
+:::
+
+::::
+
+## Seaborn: dispersión con tamaño
+
+Pregunta: ¿cómo se relacionan PIB per cápita, inflación y deuda en 2023?
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.2, 3.9))
+
+sns.scatterplot(
+    data=data_2023,
+    x="GDPpc_usd",
+    y="Inflacion",
+    size="Deuda",
+    sizes=(20, 220),
+    alpha=0.65,
+    ax=ax
+)
+
+ax.set_xscale("log")
+ax.set_title("PIB per cápita, inflación y deuda en 2023")
+ax.set_xlabel("PIB per cápita (USD, escala log)")
+ax.set_ylabel("Inflación (%)")
+ax.xaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+ax.legend(title="Deuda", fontsize=7)
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `x` e `y` definen posición.
+- `size="Deuda"` agrega una tercera variable.
+- El tamaño debe leerse como codificación aproximada.
+- La escala logarítmica mejora la lectura del ingreso.
+- Muchas codificaciones visuales pueden reducir claridad.
+
+:::
+
+:::
+
+::::
+
+## Seaborn: tendencia con `regplot`
+
+`regplot` agrega una recta estimada sobre una nube de puntos.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.2, 3.7))
+
+sns.regplot(
+    data=data_2023,
+    x="GDPpc_usd",
+    y="Inflacion",
+    scatter_kws={"alpha": 0.55},
+    line_kws={"linewidth": 2},
+    ax=ax
+)
+
+ax.set_xscale("log")
+ax.set_title("Relación entre PIB per cápita e inflación")
+ax.set_xlabel("PIB per cápita (USD, escala log)")
+ax.set_ylabel("Inflación (%)")
+ax.xaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Los puntos muestran observaciones individuales.
+- La línea resume asociación promedio.
+- La pendiente indica dirección visual.
+- La dispersión alrededor de la línea importa.
+- Los outliers pueden influir en el ajuste.
+
+:::
+
+:::
+
+::::
+
+## Seaborn: facetas con `FacetGrid`
+
+Las facetas separan grupos en paneles comparables.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+g = sns.FacetGrid(
+    data=data_comp,
+    col="Pais",
+    col_wrap=3,
+    height=2.1,
+    sharey=False
+)
+
+g.map_dataframe(
+    sns.lineplot,
+    x="Año",
+    y="GDPpc_usd",
+    marker="o"
+)
+
+g.set_titles("{col_name}")
+g.set_axis_labels("Año", "PIB per cápita")
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Cada panel muestra un país.
+- Las facetas reducen superposición.
+- `sharey=False` permite escalas verticales distintas.
+- Escalas libres destacan dinámica interna.
+- Escalas comunes destacan comparación de niveles.
+
+:::
+
+:::
+
+::::
+
+## Seaborn: síntesis conceptual
+
+Seaborn permite expresar gráficos estadísticos a partir de variables de un `DataFrame`.
+
+. . .
+
+Su lógica conceptual es:
+
+$$
+\text{DataFrame} + \text{variables} + \text{codificaciones estadísticas}.
+$$
+
+. . .
+
+Conviene usarlo para:
+
+- exploración inicial;
+- distribuciones;
+- comparaciones entre grupos;
+- relaciones bivariadas;
+- gráficos con `hue`, `size`, `style`, `row` o `col`;
+- facetas y gráficos estadísticos frecuentes.
+
+. . .
+
+Seaborn es especialmente útil cuando se piensa en términos de variables y no en términos de objetos gráficos individuales.
+
+# ggplot en Python con plotnine
+
+## Base conceptual de plotnine
+
+`plotnine` implementa en Python la gramática de gráficos.
+
+. . .
+
+La idea central es que un gráfico se construye por capas. Cada capa agrega una decisión visual.
+
+. . .
+
+La estructura general es:
+
+$$
+\text{datos} + \text{mapeo estético} + \text{geometría} + \text{estadística} + \text{escala} + \text{facetas} + \text{tema}.
+$$
+
+. . .
+
+Para explorar opciones adicionales se puede consultar la [documentación oficial de plotnine](https://plotnine.org/).
+
+## Componentes de la gramática
+
+| Componente | Pregunta que responde | Ejemplo |
+|---|---|---|
+| `data` | ¿qué datos se usan? | `data_bol` |
+| `aes()` | ¿qué variable se asigna a qué atributo visual? | `x="Año", y="GDPpc_usd"` |
+| `geom_*()` | ¿qué marca visual se dibuja? | `geom_line()` |
+| `scale_*()` | ¿cómo se transforma una escala? | `scale_x_log10()` |
+| `facet_*()` | ¿cómo se separan grupos en paneles? | `facet_wrap("~ Pais")` |
+| `theme_*()` | ¿cómo se ajusta la apariencia? | `theme_bw()` |
+
+. . .
+
+El gráfico se entiende como una composición de decisiones.
+
+## Importar plotnine
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+from plotnine import (
+    ggplot, aes,
+    geom_line, geom_point, geom_col,
+    geom_histogram, geom_boxplot, geom_smooth,
+    facet_wrap,
+    labs, theme, theme_bw,
+    scale_x_log10,
+    coord_flip
+)
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `ggplot()` inicia el gráfico.
+- `aes()` declara mapeos visuales.
+- `geom_*()` agrega capas geométricas.
+- `facet_wrap()` crea paneles por grupo.
+- `theme()` permite controlar tamaño y apariencia.
+
+:::
+
+:::
+
+::::
+
+## plotnine: ejemplo
+
+La gramática de gráficos separa datos, mapeos y geometrías.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+produccion = pd.DataFrame({
+    "mes": ["Ene", "Feb", "Mar", "Abr", "May"],
+    "produccion": [20, 24, 22, 27, 31]
+})
+
+(
+    ggplot(produccion, aes(x="mes", y="produccion"))
+    + geom_col()
+    + labs(
+        title="Producción mensual",
+        x="Mes",
+        y="Producción"
+    )
+    + theme_bw()
+    + theme(figure_size=(6.2, 3.4))
+)
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `ggplot()` recibe los datos.
+- `aes()` asigna variables a atributos visuales.
+- `geom_col()` elige barras como geometría.
+- `labs()` agrega títulos y etiquetas.
+- `theme_bw()` define la apariencia general.
+
+:::
+
+:::
+
+::::
+
+## plotnine: capas y opciones básicas
+
+Cambiar o agregar capas modifica el gráfico sin cambiar la estructura general.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+produccion_larga = pd.DataFrame({
+    "mes": ["Ene", "Feb", "Mar", "Abr", "May"] * 2,
+    "valor": [20, 24, 22, 27, 31, 18, 21, 23, 25, 29],
+    "planta": ["A"] * 5 + ["B"] * 5
+})
+
+(
+    ggplot(produccion_larga, aes(x="mes", y="valor", group="planta"))
+    + geom_line(aes(linetype="planta"))
+    + geom_point(aes(shape="planta"))
+    + labs(
+        title="Producción por planta",
+        x="Mes",
+        y="Producción"
+    )
+    + theme_bw()
+    + theme(figure_size=(6.2, 3.4))
+)
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `group="planta"` separa trayectorias.
+- `linetype` codifica grupos con tipo de línea.
+- `shape` codifica grupos con forma del punto.
+- Las geometrías se agregan con `+`.
+- La sintaxis hace visible la composición del gráfico.
+
+:::
+
+:::
+
+::::
+
+## plotnine: primera construcción con datos reales
+
+Pregunta: ¿cómo evolucionó el PIB per cápita de Bolivia?
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+(
+    ggplot(data_bol, aes(x="Año", y="GDPpc_usd"))
+    + geom_line()
+    + geom_point()
+    + labs(
+        title="Bolivia: PIB per cápita",
+        x="Año",
+        y="PIB per cápita (USD)"
+    )
+    + theme_bw()
+    + theme(figure_size=(6.2, 3.7))
+)
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `ggplot()` recibe el dataset.
+- `aes()` asigna variables a ejes.
+- `geom_line()` dibuja la trayectoria.
+- `geom_point()` marca cada observación.
+- El operador `+` agrega capas.
+
+:::
+
+:::
+
+::::
+
+## plotnine: lectura de la sintaxis
+
+La sintaxis se interpreta como una construcción acumulativa.
+
+. . .
+
+Primero se declaran datos y mapeos:
+
+$$
+\texttt{ggplot(data\_bol, aes(x="Año", y="GDPpc\_usd"))}
+$$
+
+. . .
+
+Luego se agregan geometrías:
+
+$$
+\texttt{geom\_line() + geom\_point()}
+$$
+
+. . .
+
+Finalmente se agregan etiquetas y tema:
+
+$$
+\texttt{labs(...) + theme\_minimal()}
+$$
+
+. . .
+
+La estructura hace explícita la relación entre datos, variables y marcas visuales.
+
+## plotnine: barras
+
+Para rankings se usa `geom_col()`.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+top_gdp_2023_plot = (
+    data_2023
+    .nlargest(10, "GDPpc_usd")
+    .sort_values("GDPpc_usd")
+    .copy()
+)
+
+(
+    ggplot(top_gdp_2023_plot, aes(x="Pais", y="GDPpc_usd"))
+    + geom_col()
+    + coord_flip()
+    + labs(
+        title="Top 10 países por PIB per cápita en 2023",
+        x="",
+        y="PIB per cápita (USD)"
+    )
+    + theme_bw()
+    + theme(figure_size=(6.2, 3.8))
+)
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `geom_col()` usa valores ya presentes en los datos.
+- La altura de cada barra viene de `GDPpc_usd`.
+- `coord_flip()` invierte los ejes.
+- La orientación horizontal mejora lectura de etiquetas.
+- La estructura por capas se mantiene.
+
+:::
+
+:::
+
+::::
+
+## plotnine: histograma
+
+Para distribuciones se usa `geom_histogram()`.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+(
+    ggplot(data_2023, aes(x="GDPpc_usd"))
+    + geom_histogram(bins=25)
+    + labs(
+        title="Distribución del PIB per cápita en 2023",
+        x="PIB per cápita (USD)",
+        y="Número de países"
+    )
+    + theme_bw()
+    + theme(figure_size=(6.2, 3.7))
+)
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- El mapeo estético solo requiere `x`.
+- La geometría calcula frecuencias.
+- `bins=25` fija el número de intervalos.
+- El histograma resume concentración y cola.
+- La decisión de intervalos sigue siendo analítica.
+
+:::
+
+:::
+
+::::
+
+## plotnine: boxplot
+
+Para comparar distribuciones por grupo se usa `geom_boxplot()`.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+(
+    ggplot(inflacion_comp, aes(x="Pais", y="Inflacion"))
+    + geom_boxplot()
+    + labs(
+        title="Distribución de inflación por país, 2000-2023",
+        x="",
+        y="Inflación (%)"
+    )
+    + theme_bw()
+    + theme(figure_size=(6.2, 3.8))
+)
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `Pais` define los grupos.
+- `Inflacion` define la variable resumida.
+- Cada caja resume una distribución histórica.
+- La comparación se centra en mediana, dispersión y extremos.
+- El gráfico compara más que promedios.
+
+:::
+
+:::
+
+::::
+
+## plotnine: dispersión
+
+Para relaciones bivariadas se usa `geom_point()`.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+(
+    ggplot(data_2023, aes(x="GDPpc_usd", y="Inflacion"))
+    + geom_point(alpha=0.6)
+    + scale_x_log10()
+    + labs(
+        title="PIB per cápita e inflación en 2023",
+        x="PIB per cápita (USD, escala log)",
+        y="Inflación (%)"
+    )
+    + theme_bw()
+    + theme(figure_size=(6.2, 3.7))
+)
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Cada punto representa un país.
+- `scale_x_log10()` transforma la escala horizontal.
+- La nube muestra asociación y dispersión.
+- La escala logarítmica mejora comparación proporcional.
+- Los puntos extremos deben revisarse con cuidado.
+
+:::
+
+:::
+
+::::
+
+## plotnine: tendencia
+
+Una línea ajustada se agrega como una capa adicional.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+(
+    ggplot(data_2023, aes(x="GDPpc_usd", y="Inflacion"))
+    + geom_point(alpha=0.55)
+    + geom_smooth(method="lm")
+    + scale_x_log10()
+    + labs(
+        title="PIB per cápita e inflación: tendencia lineal",
+        x="PIB per cápita (USD, escala log)",
+        y="Inflación (%)"
+    )
+    + theme_bw()
+    + theme(figure_size=(6.2, 3.7))
+)
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `geom_point()` muestra datos observados.
+- `geom_smooth(method="lm")` agrega una recta.
+- La recta resume asociación promedio.
+- La pendiente resume dirección visual.
+- La dispersión alrededor de la recta sigue siendo central.
+
+:::
+
+:::
+
+::::
+
+## plotnine: facetas
+
+Las facetas agregan paneles por grupo.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+(
+    ggplot(data_comp, aes(x="Año", y="GDPpc_usd"))
+    + geom_line()
+    + geom_point()
+    + facet_wrap("~ Pais", scales="free_y")
+    + labs(
+        title="PIB per cápita por país",
+        x="Año",
+        y="PIB per cápita (USD)"
+    )
+    + theme_bw()
+    + theme(figure_size=(6.2, 4.2))
+)
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- `facet_wrap()` crea paneles por país.
+- Cada panel conserva la misma estructura.
+- `scales="free_y"` permite escalas verticales distintas.
+- Las escalas libres enfatizan dinámica interna.
+- Para comparar niveles, conviene usar escalas comunes.
+
+:::
+
+:::
+
+::::
+
+## plotnine: síntesis conceptual
+
+Plotnine organiza el gráfico como una suma de capas coherentes.
+
+. . .
+
+Su lógica conceptual es:
+
+$$
+\text{declarar datos} \rightarrow \text{mapear variables} \rightarrow \text{agregar geometrías} \rightarrow \text{ajustar escalas y temas}.
+$$
+
+. . .
+
+Conviene usarlo para:
+
+- enseñar la estructura conceptual de un gráfico;
+- construir visualizaciones por capas;
+- trabajar con facetas;
+- mantener código declarativo;
+- replicar la lógica de `ggplot`.
+
+. . .
+
+La gramática de gráficos ayuda a pensar la visualización como una secuencia ordenada de decisiones analíticas.
+
+# Comparación entre paquetes
+
+## El mismo problema, tres formas de pensar
+
+Pregunta:
+
+$$
+\text{¿cómo evolucionó el PIB per cápita de Bolivia?}
+$$
+
+. . .
+
+La pregunta empírica es la misma, pero cada paquete organiza la solución de forma distinta.
+
+:::: {.columns}
+
+::: {.column width="30%"}
+**Matplotlib**
+
+Piensa en objetos: figura, ejes y artistas.
+:::
+
+::: {.column width="3%"}
+:::
+
+::: {.column width="30%"}
+**Seaborn**
+
+Piensa en variables de un `DataFrame` y codificaciones estadísticas.
+:::
+
+::: {.column width="3%"}
+:::
+
+::: {.column width="33%"}
+**plotnine**
+    
+Piensa en capas: datos, mapeos, geometrías, escalas y temas.
+:::
+
+::::
+
+. . .
+
+La diferencia importante no es solo sintáctica. Cada paquete enseña una forma distinta de razonar sobre una visualización.
+
+## Comparación: Matplotlib
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.2, 3.7))
+
+ax.plot(
+    data_bol["Año"],
+    data_bol["GDPpc_usd"],
+    marker="o"
+)
+
+ax.set_title("Bolivia: PIB per cápita")
+ax.set_xlabel("Año")
+ax.set_ylabel("PIB per cápita (USD)")
+ax.yaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Se crean explícitamente figura y ejes.
+- Se pasan vectores al método `plot`.
+- Cada ajuste se realiza sobre `ax`.
+- Es ideal para personalización fina.
+- El código muestra la construcción manual del gráfico.
+
+:::
+
+:::
+
+::::
+
+## Comparación: Seaborn
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.2, 3.7))
+
+sns.lineplot(
+    data=data_bol,
+    x="Año",
+    y="GDPpc_usd",
+    marker="o",
+    ax=ax
+)
+
+ax.set_title("Bolivia: PIB per cápita")
+ax.set_xlabel("Año")
+ax.set_ylabel("PIB per cápita (USD)")
+ax.yaxis.set_major_formatter(mticker.StrMethodFormatter("{x:,.0f}"))
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Se pasa el `DataFrame` en `data`.
+- Las columnas se indican por nombre.
+- La sintaxis se acerca a la pregunta.
+- Es práctico para exploración estadística.
+- Los ajustes finos se hacen con Matplotlib.
+
+:::
+
+:::
+
+::::
+
+## Comparación: plotnine
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+(
+    ggplot(data_bol, aes(x="Año", y="GDPpc_usd"))
+    + geom_line()
+    + geom_point()
+    + labs(
+        title="Bolivia: PIB per cápita",
+        x="Año",
+        y="PIB per cápita (USD)"
+    )
+    + theme_bw()
+    + theme(figure_size=(6.2, 3.7))
+)
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- El gráfico se construye por capas.
+- `aes()` declara variables visuales.
+- `geom_line()` y `geom_point()` declaran marcas.
+- La estructura es declarativa.
+- Es útil para pensar la gramática visual.
+
+:::
+
+:::
+
+::::
+
+## Cuándo usar cada paquete
+
+| Necesidad | Paquete sugerido |
+|---|---|
+| Control fino de ejes, textos y anotaciones | `matplotlib` |
+| Exploración estadística rápida | `seaborn` |
+| Distribuciones y relaciones por grupo | `seaborn` |
+| Construcción conceptual por capas | `plotnine` |
+| Facetas declarativas | `plotnine` o `seaborn` |
+| Gráficos finales muy personalizados | `matplotlib` |
+| Enseñar la lógica de una visualización | `plotnine` |
+
+. . .
+
+La elección depende de la pregunta, del público, del nivel de control y del momento del análisis.
+
+# Ejercicios
+
+## Ejercicio 1: deuda de Bolivia con Matplotlib
+
+Construir una serie temporal de deuda pública para Bolivia.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.2, 3.7))
+
+ax.plot(
+    data_bol["Año"],
+    data_bol["Deuda"],
+    marker="o",
+    linewidth=1.8
+)
+
+ax.set_title("Bolivia: deuda pública")
+ax.set_xlabel("Año")
+ax.set_ylabel("Deuda pública")
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Identificar años de aumento y disminución.
+- Observar si hay saltos bruscos.
+- Comparar niveles iniciales y finales.
+- Formular una hipótesis económica para investigar.
+- Separar descripción visual y explicación causal.
+
+:::
+
+:::
+
+::::
+
+## Ejercicio 2: comparación de deuda con Seaborn
+
+Comparar deuda pública entre países desde 2000.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+fig, ax = plt.subplots(figsize=(6.4, 4.0))
+
+sns.lineplot(
+    data=data_comp,
+    x="Año",
+    y="Deuda",
+    hue="Pais",
+    marker="o",
+    ax=ax
+)
+
+ax.set_title("Deuda pública: comparación entre países")
+ax.set_xlabel("Año")
+ax.set_ylabel("Deuda pública")
+ax.legend(title="País", fontsize=7)
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Evaluar si las líneas se distinguen claramente.
+- Observar países con mayor nivel de deuda.
+- Identificar episodios de cambio rápido.
+- Revisar si la leyenda ayuda o estorba.
+- Considerar facetas si el gráfico está saturado.
+
+:::
+
+:::
+
+::::
+
+## Ejercicio 3: déficit fiscal con Seaborn
+
+Estudiar la distribución del déficit fiscal en 2023.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+data_def_2023 = (
+    data_2023
+    .dropna(subset=["Deficit_Fiscal"])
+    .copy()
+)
+
+fig, ax = plt.subplots(figsize=(6.2, 3.7))
+
+sns.histplot(
+    data=data_def_2023,
+    x="Deficit_Fiscal",
+    bins=25,
+    kde=True,
+    ax=ax
+)
+
+ax.set_title("Distribución del déficit fiscal en 2023")
+ax.set_xlabel("Déficit fiscal")
+ax.set_ylabel("Número de países")
+
+plt.show()
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Describir el centro aproximado.
+- Observar dispersión entre países.
+- Identificar si hay cola hacia algún lado.
+- Revisar valores extremos.
+- Comparar histograma y curva suavizada.
+
+:::
+
+:::
+
+::::
+
+## Ejercicio 4: deuda e inflación con plotnine
+
+Construir una nube de puntos entre deuda e inflación en 2023.
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{python}
+(
+    ggplot(data_2023, aes(x="Deuda", y="Inflacion"))
+    + geom_point(alpha=0.6)
+    + geom_smooth(method="lm")
+    + labs(
+        title="Deuda e inflación en 2023",
+        x="Deuda pública",
+        y="Inflación (%)"
+    )
+    + theme_bw()
+    + theme(figure_size=(6.2, 3.7))
+)
+```
+:::
+
+::: {.column width="38%"}
+
+::: {.incremental}
+
+- Observar dirección de la relación.
+- Evaluar dispersión alrededor de la línea.
+- Identificar puntos extremos.
+- Pensar si la relación parece lineal.
+- Formular una pregunta estadística posterior.
+
+:::
+
+:::
+
+::::
+
+# Conclusiones
+
+## Ideas centrales
+
+1. La visualización transforma datos en comparaciones. Lo importante es que el gráfico sea claro, interpretable y útil para la pregunta empírica.
+
+. . .
+
+2. La pregunta empírica define el tipo de gráfico.
+
+. . .
+
+3. **Matplotlib** ofrece control explícito, **Seaborn** ofrece una interfaz estadística sobre `DataFrame` y **plotnine** ofrece una gramática visual por capas.
+
+. . .
+
+4. Un gráfico estadístico requiere títulos, etiquetas, unidades, escalas claras e interpretación cuidadosa. 

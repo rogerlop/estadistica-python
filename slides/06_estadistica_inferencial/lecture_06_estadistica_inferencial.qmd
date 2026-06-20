@@ -4,6 +4,33 @@ subtitle: "Clase 6 — Curso de Estadística en Python"
 author: "CENACE"
 date: today
 lang: es
+fontsize: 12pt
+institute: IE University
+format:
+  revealjs:
+    theme: serif
+    fig-align: center
+    self-contained: true
+    css: "../../assets/custom_v2.css"
+    toc: true
+    code-fold: false
+    code-summary: "Check the code"
+    toc-title: "Contenido"
+    toc-location: left
+    toc-depth: 1
+    slide-number: true
+    slide-level: 3
+    link-external-newwindow: true
+    preview-links: true
+    auto-stretch: false
+    transition: fade
+    math: mathjax
+    html-math-method: mathjax
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
 ---
 
 ```{python}
