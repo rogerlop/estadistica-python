@@ -34,6 +34,7 @@ estadistica-python/
 │   ├── 02_fundamentos_python/
 │   ├── 03_analisis_python/
 │   └── 04_dataviz/
+├── notebooks/              # Notebooks para practicar en clase
 ├── data/
 │   └── raw/                # Datos originales usados en clase
 └── docs/                   # Documentos complementarios
@@ -49,6 +50,12 @@ Los datos disponibles para las primeras clases están en [`data/raw/`](data/raw/
 Estos archivos se usan para practicar importación, exploración, limpieza,
 análisis y visualización de datos con Python.
 
+## Notebooks
+
+Los notebooks disponibles están en [`notebooks/`](notebooks/):
+
+- [`03_analisis_datos_pandas_notebook.ipynb`](notebooks/03_analisis_datos_pandas_notebook.ipynb)
+
 ## Documentos
 
 Los documentos complementarios del curso están en [`docs/`](docs/):
@@ -59,8 +66,8 @@ Los documentos complementarios del curso están en [`docs/`](docs/):
 
 Para estudiantes, no es necesario instalar nada para ver las presentaciones:
 basta con entrar a la página web del curso y abrir la clase correspondiente.
-Los datos se pueden descargar directamente desde `data/raw/` y los documentos
-desde `docs/`.
+Los notebooks, datos y documentos se pueden descargar directamente desde sus
+carpetas correspondientes.
 
 ## Estado del material
 
