@@ -19,9 +19,6 @@ Clases disponibles por ahora:
 | 3 | Análisis de datos con pandas | [Abrir clase 3](https://rogerlop.github.io/estadistica-python/slides/03_analisis_python/lecture_03_analisis-python.html) |
 | 4 | Visualización de datos en Python | [Abrir clase 4](https://rogerlop.github.io/estadistica-python/slides/04_dataviz/lecture_04_visualizacion.html) |
 
-> Nota: si los enlaces aún no abren como página web, falta activar GitHub Pages
-> en el repositorio. La configuración sugerida es **Settings > Pages > Deploy
-> from a branch > main > /root**.
 
 ## Dónde está cada cosa
 
