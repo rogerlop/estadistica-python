@@ -51,22 +51,14 @@
       }
 
       .brand {
-        display: flex;
-        align-items: center;
-        gap: 16px;
         margin-bottom: 34px;
       }
 
-      .brand img {
-        width: 118px;
-        max-height: 58px;
-        object-fit: contain;
-        background: rgba(255, 255, 255, 0.92);
-        border-radius: 6px;
-        padding: 8px;
-      }
-
       .brand span {
+        display: inline-block;
+        border: 1px solid rgba(255, 255, 255, 0.32);
+        border-radius: 6px;
+        padding: 8px 10px;
         color: rgba(255, 255, 255, 0.78);
         font-size: 0.96rem;
       }
@@ -149,7 +141,7 @@
 
       .resource-band {
         display: grid;
-        grid-template-columns: 1.25fr 1fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 18px;
         margin-top: 28px;
       }
@@ -180,22 +172,18 @@
       }
 
       @media (max-width: 900px) {
-        .grid,
-        .resource-band {
+        .grid {
           grid-template-columns: 1fr 1fr;
+        }
+
+        .resource-band {
+          grid-template-columns: 1fr;
         }
       }
 
       @media (max-width: 620px) {
         header {
           padding-top: 28px;
-        }
-
-        .brand {
-          align-items: flex-start;
-          flex-direction: column;
-          gap: 10px;
-          margin-bottom: 24px;
         }
 
         .grid,
@@ -213,7 +201,6 @@
     <header>
       <div class="wrap">
         <div class="brand">
-          <img src="assets/logoCENACE.svg" alt="Logo CENACE">
           <span>CENACE - Universidad Privada de Santa Cruz</span>
         </div>
         <h1>Estadística Aplicada en Python</h1>
@@ -279,10 +266,17 @@
           </div>
 
           <div class="resource">
+            <h2 class="section-title">Documentos</h2>
+            <p>
+              Material complementario del curso en formato descargable.
+            </p>
+            <a href="docs/Estadistica-Python_CENACE.docx">Descargar DOCX</a>
+          </div>
+
+          <div class="resource">
             <h2 class="section-title">Repositorio</h2>
             <p>
-              Código fuente de las presentaciones, ejercicios y funciones
-              auxiliares.
+              Versión pública con presentaciones, datos y documentos del curso.
             </p>
             <a href="https://github.com/rogerlop/estadistica-python">Ver en GitHub</a>
           </div>

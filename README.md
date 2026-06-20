@@ -36,10 +36,6 @@ estadistica-python/
 │   └── 04_dataviz/
 ├── data/
 │   └── raw/                # Datos originales usados en clase
-├── assets/                 # Imágenes, logo y estilos de las diapositivas
-├── live/                   # Scripts para sesiones en vivo
-├── exercises/              # Plantillas y soluciones de ejercicios
-├── src/                    # Funciones auxiliares del curso
 └── docs/                   # Documentos complementarios
 ```
 
@@ -53,24 +49,18 @@ Los datos disponibles para las primeras clases están en [`data/raw/`](data/raw/
 Estos archivos se usan para practicar importación, exploración, limpieza,
 análisis y visualización de datos con Python.
 
+## Documentos
+
+Los documentos complementarios del curso están en [`docs/`](docs/):
+
+- [`Estadistica-Python_CENACE.docx`](docs/Estadistica-Python_CENACE.docx)
+
 ## Cómo usar este repositorio
 
 Para estudiantes, no es necesario instalar nada para ver las presentaciones:
 basta con entrar a la página web del curso y abrir la clase correspondiente.
-
-Para ejecutar los ejemplos localmente, se recomienda usar Python 3.12 y crear el
-entorno del proyecto con `uv`:
-
-```bash
-uv python install 3.12
-uv sync
-```
-
-Para renderizar una presentación con Quarto:
-
-```bash
-./scripts/quarto-wrapper.sh render slides/01_Instalacion/lecture_01_Python_Instalacion.qmd
-```
+Los datos se pueden descargar directamente desde `data/raw/` y los documentos
+desde `docs/`.
 
 ## Estado del material
 
