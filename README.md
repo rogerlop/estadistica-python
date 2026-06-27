@@ -18,6 +18,7 @@ Clases disponibles por ahora:
 | 2 | Fundamentos de Python | [Abrir clase 2](https://rogerlop.github.io/estadistica-python/slides/02_fundamentos_python/lecture_02_fundamentos_python.html) |
 | 3 | Análisis de datos con pandas | [Abrir clase 3](https://rogerlop.github.io/estadistica-python/slides/03_analisis_python/lecture_03_analisis-python.html) |
 | 4 | Visualización de datos en Python | [Abrir clase 4](https://rogerlop.github.io/estadistica-python/slides/04_dataviz/lecture_04_visualizacion.html) |
+| 5 | Estadística descriptiva | [Abrir clase 5](https://rogerlop.github.io/estadistica-python/slides/05_estadistica_descriptiva/lecture_05_estadistica_descriptiva.html) |
 
 
 ## Dónde está cada cosa
